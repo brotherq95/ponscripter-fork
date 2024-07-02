@@ -1,0 +1,50 @@
+channel : provide 10 channels, channel number : 0~9 (MAX_CHANNEL_NUM = 10)
+channel 0 is used for voice
+override when channel number is same
+
+mode :  0 - empty, 1 - once, 2 - loop
+
+priority : specifies the image priority when overlap
+In the same priority, the lower#channel is seen above
+(look at the list below)
+
+[SCREEN]
+(-1) : forced to show during effect
+(1)
+[button]
+(2)
+[text window]
+(3)
+[sprite2] (!windowback_flag)
+(4)
+[sprite] (above z_order, look 'humanz' command)
+(5)
+[sprite2] (windowback_flag)
+(6)
+[standing]
+(7)
+[sprite] (below z_order)
+(8) : recommended use for transparent background (rainy)
+(9) : recommended use for rain
+[background]
+
+simul_makerain NUM NUM NUM NUM NUM
+channel, priority, interval(ms), num of rain, max length of rain(% of screen_height)
+raindrop with random length (10~100% of max length) generated
+(no need 'simul_play')
+
+simul_bg2 NUM STR
+channel, image filename
+
+simul_set NUM NUM NUM STR
+channel, mode, priority, timestamp filename(.txt)
+
+simul_play NUM
+channel
+
+simul_off NUM
+channel
+
+simul_ch_witheff NUM NUM
+channel, on/off
+(on(1) to active channel when effect on, like priority -1)
