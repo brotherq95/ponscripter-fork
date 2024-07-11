@@ -318,13 +318,10 @@ sfunc_lut_t::sfunc_lut_t() {
     dict["shell"]          = &PonscripterLabel::shellCommand;
     dict["simul_bg2"]        = &PonscripterLabel::simul_bg2Command;
     dict["simul_ch_witheff"] = &PonscripterLabel::simul_ch_witheffCommand;
-    dict["simul_lip"]        = &PonscripterLabel::simul_lipCommand;
     dict["simul_makerain"]   = &PonscripterLabel::simul_makerainCommand;
     dict["simul_off"]        = &PonscripterLabel::simul_offCommand;
     dict["simul_play"]       = &PonscripterLabel::simul_playCommand;
     dict["simul_set"]        = &PonscripterLabel::simul_setCommand;
-    dict["simul_set_manual"] = &PonscripterLabel::simul_set_manualCommand;
-    dict["simul_shake"]      = &PonscripterLabel::simul_shakeCommand;
     dict["sp_rgb_gradation"] = &PonscripterLabel::sp_rgb_gradationCommand;
     dict["spbtn"]            = &PonscripterLabel::spbtnCommand;
     dict["spclclk"]          = &PonscripterLabel::spclclkCommand;
@@ -630,10 +627,13 @@ PonscripterLabel::PonscripterLabel()
     skip_to_wait         = 0;
     sprite_info          = new AnimationInfo[MAX_SPRITE_NUM];
     sprite2_info         = new AnimationInfo[MAX_SPRITE2_NUM];
-    simul_lip_info = new AnimationInfo*[MAX_LIP_NUM];
-    for(int ii=0; ii<MAX_LIP_NUM; ii++){
-        simul_lip_info[ii] = new AnimationInfo[3];
-    }
+    simul_lip_info = new AnimationInfo*[6];
+    simul_lip_info[0] = new AnimationInfo[3];
+    simul_lip_info[1] = new AnimationInfo[3];
+    simul_lip_info[2] = new AnimationInfo[3];
+    simul_lip_info[3] = new AnimationInfo[3];
+    simul_lip_info[4] = new AnimationInfo[3];
+    simul_lip_info[5] = new AnimationInfo[3];
     simul_info = new AnimationInfo[MAX_SIMUL_NUM];
     enable_wheeldown_advance_flag = false;
 
@@ -1276,20 +1276,16 @@ int PonscripterLabel::init(const char* preferred_script)
     setEffect_flag = false;
     effect_flag = false;
     from_simul = false;
-    pause_sound_stack = 0;
 
     for (i = 0; i < MAX_CHANNEL_NUM; i++){
         simul_Channel[i].mode = 0;
         simul_Channel[i].pre_mode = 0;
         simul_Channel[i].visible_with_effect = false;
-        simul_Channel[i].need_load = false;
     }
-    simul_Channel[0].pre_mode = 1;
 
     //simul_info = new AnimationInfo[MAX_SIMUL_NUM];
     //for (i = 0; i < MAX_SIMUL_NUM; i++) simul_info[i].reset();
     simul_info_p = 0;
-    simul_lip_info_p = 0;
     //simul_lip_info = new AnimationInfo*[6];
     /*for (i = 0; i < 6; i++){
         //simul_lip_info[i] = new AnimationInfo[3];
@@ -1304,25 +1300,12 @@ int PonscripterLabel::init(const char* preferred_script)
         AnimationInfo::allocSurface(screen_width, screen_height);
     SDL_SetSurfaceAlphaMod(simul_rain_surface, SDL_ALPHA_OPAQUE);
     SDL_SetSurfaceBlendMode(simul_rain_surface, SDL_BLENDMODE_ADD);
-    //simul_drop_surface = IMG_Load("bmp\\rain\\drop.png");
+    simul_drop_surface = IMG_Load("bmp\\rain\\drop.png");
     simul_src_surface =
         AnimationInfo::allocSurface(screen_width, screen_height);
     SDL_SetSurfaceAlphaMod(simul_src_surface, SDL_ALPHA_OPAQUE);
     SDL_SetSurfaceBlendMode(simul_src_surface, SDL_BLENDMODE_NONE);
     simul_rainstartTick = 0;
-
-    simul_shakemode = false;
-    simul_shakestartTick = 0;
-
-    drop_info.reset();
-    drop_info.visible(true);
-    drop_info.setImageName(":ba;bmp\\rain\\drop.png");
-    drop_info.trans = 256;
-    drop_info.scale_x = 100;
-    drop_info.rot = 0;
-    drop_info.affine_flag = true;
-    parseTaggedString(&drop_info);
-    setupAnimationInfo(&drop_info);
 
     // ----------------------------------------
     // Sound related variables
@@ -1477,9 +1460,8 @@ void PonscripterLabel::resetSub()
     bg_info.file_name = "black";
     createBackground();
     for (i = 0; i < 3; i++) tachi_info[i].reset();
-    for (i = 0; i < MAX_LIP_NUM; i++){
+    for (i = 0; i < 6; i++){
         simul_lip_id[i] = 0;
-        simul_lip_sno[i] = -1;
         for(int j = 0; j < 3; j++){
             simul_lip_info[i][j].reset();
         }

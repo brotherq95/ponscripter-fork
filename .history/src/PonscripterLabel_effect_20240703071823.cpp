@@ -44,7 +44,7 @@ int PonscripterLabel::setEffect(Effect& effect, bool generate_effect_dst, bool u
     int effect_no = effect.effect;
     if (effect_cut_flag && skip_flag) effect_no = 1;
 
-    if(!pause_sound_stack && effect_flag && !(skip_flag || ctrl_pressed_status || skip_to_wait)) SDL_BlitSurface(simul_src_surface, NULL, effect_src_surface, NULL);
+    if(effect_flag) SDL_BlitSurface(simul_src_surface, NULL, effect_src_surface, NULL);
     else SDL_BlitSurface(accumulation_surface, NULL, effect_src_surface, NULL);
 
     if (generate_effect_dst){
