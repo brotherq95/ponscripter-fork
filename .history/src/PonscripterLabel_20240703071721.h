@@ -65,7 +65,6 @@
 #define NUM_GLYPH_CACHE 30
 
 #define MAX_CHANNEL_NUM 10
-#define MAX_LIP_NUM 15
 #define MAX_STAMP_NUM 1000
 #define MAX_SIMUL_NUM 1000
 #define CHUNK_DURATION_MS 50
@@ -353,21 +352,12 @@ public:
     int steamsetachieveCommand(const pstring& cmd);
 
     
-    int simul_autobg2Command(const pstring& cmd);
     int simul_bg2Command(const pstring& cmd);
     int simul_ch_witheffCommand(const pstring& cmd);
-    int simul_lipCommand(const pstring& cmd);
-    int simul_lipallCommand(const pstring& cmd);
     int simul_makerainCommand(const pstring& cmd);
-    int simul_nextldCommand(const pstring& cmd);
-    int simul_nextvoiceCommand(const pstring& cmd);
     int simul_offCommand(const pstring& cmd);
-    int simul_offallCommand(const pstring& cmd);
     int simul_playCommand(const pstring& cmd);
     int simul_setCommand(const pstring& cmd);
-    int simul_set_manualCommand(const pstring& cmd);
-    int simul_shakeCommand(const pstring& cmd);
-    int simul_sysoffCommand(const pstring& cmd);
 
 protected:
     /* ---------------------------------------- */
@@ -964,20 +954,6 @@ private:
     bool setEffect_flag;
     bool effect_flag;
     bool from_simul;
-    bool pause_flag;
-    bool autobg2_flag;
-    bool lipall_flag;
-    int rainpause_flag;
-    
-    int pause_sound_stack;
-    int rain_now;
-    int shake_now;
-    int bg2_now;
-    int autobg2_ch;
-
-    int next_voice;
-    int next_ld;
-    int simul_voice_sno;
     
     struct simul_Channel_struct{
         Uint32 startTick;
@@ -989,7 +965,6 @@ private:
         int priority;
         int current;
         bool visible_with_effect;
-        bool need_load;
     };
     struct simul_Channel_struct simul_Channel[MAX_CHANNEL_NUM];
     
@@ -997,35 +972,20 @@ private:
     //AnimationInfo simul_info[MAX_SIMUL_NUM];
     int simul_info_p;
     AnimationInfo** simul_lip_info;
-    //AnimationInfo simul_lip_info[MAX_LIP_NUM][3];
-    int simul_lip_info_p;
-    int simul_lip_id[MAX_LIP_NUM];
-    int simul_lip_sno[MAX_LIP_NUM];
-    int simul_lip_x[MAX_LIP_NUM];
-    int simul_lip_y[MAX_LIP_NUM];
+    //AnimationInfo simul_lip_info[6][3];
+    int simul_lip_id[6];
     int simul_voice_id;
 
-
-    AnimationInfo drop_info;
     SDL_Surface* simul_rain_surface;
-    //SDL_Surface* simul_drop_surface;
+    SDL_Surface* simul_drop_surface;
     SDL_Surface* simul_src_surface;
-    int simul_rainNum, simul_rainMaxLength, simul_rainMinLength;
+    int simul_rainNum, simul_rainLength;
     Uint32 simul_rainstartTick, simul_rainPeriod;
-
-    bool simul_shakemode, simul_shakeflag;
-    Uint32 simul_shakestartTick, simul_shakePeriod;
-    int simul_shakePx, simul_shakePy, simul_shakex, simul_shakey;
     
-    bool simul_checkFlushSub();
     void simul_checkFlush();
     void simul_drawRain();
     void simul_refreshSub(SDL_Surface* surface, SDL_Rect &clip, int priority);
-    void drawTaggedSurface2(SDL_Surface* dst_surface, AnimationInfo* anim, SDL_Rect &clip);
-    
     void simul_play(int no);
-    int set_id(pstring& filename);
-    int simul_allocate_lipinfoIndex(int no);
     int simul_allocate_infoIndex();
 
     /* ---------------------------------------- */

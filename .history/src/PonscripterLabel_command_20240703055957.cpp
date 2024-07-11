@@ -138,20 +138,11 @@ int PonscripterLabel::vspCommand(const pstring& cmd)
             sprite2_info[no].visible(vis);
             dirty_rect.add(sprite2_info[no].bounding_rect);
         }
-        no1 += 10000;
-        no2 += 10000;
     }
     else {
         for (int no = no1; no <= no2; ++no){
             sprite_info[no].visible(vis);
             dirty_rect.add(sprite_info[no].pos);
-        }
-    }
-    for(int lii=3; lii<MAX_LIP_NUM; lii++){
-        if(simul_lip_sno[lii] >= no1 && simul_lip_sno[lii] <= no2){
-            for(int i=0; i<3; i++){
-                simul_lip_info[lii][i].visible(vis);
-            }
         }
     }
     return RET_CONTINUE;
@@ -1468,28 +1459,13 @@ int PonscripterLabel::mspCommand(const pstring& cmd)
     }
     dirty_rect.add(sprite2 ? si.bounding_rect : si.pos);
 
+    
+    if(no >= 883 && no < 886){
+        //TODOIMP
+    }
+
     if (si.trans > 256) si.trans = 256;
     else if (si.trans < 0) si.trans = 0;
-
-    int cno = no;
-    if(sprite2) cno+=10000;
-    for(int lii=3; lii<MAX_LIP_NUM; lii++){
-        if(simul_lip_sno[lii] == cno){
-            for(int i=0; i<3; i++){
-                simul_lip_info[lii][i].trans = si.trans;
-                if(sprite2){
-                    simul_lip_info[lii][i].pos.x = si.pos.x + simul_lip_x[lii]*si.scale_x/100;
-                    simul_lip_info[lii][i].pos.y = si.pos.y + simul_lip_y[lii]*si.scale_y/100;
-                    simul_lip_info[lii][i].rot = 0;
-                    simul_lip_info[lii][i].calcAffineMatrix();
-                }
-                else{
-                    simul_lip_info[lii][i].pos.x = si.pos.x + simul_lip_x[lii];
-                    simul_lip_info[lii][i].pos.y = si.pos.y + simul_lip_y[lii];
-                }
-            }
-        }
-    }
 
     return RET_CONTINUE;
 }
@@ -1812,80 +1788,6 @@ int PonscripterLabel::langallCommand(const pstring& cmd)
     return RET_CONTINUE;
 }
 
-int PonscripterLabel::set_id(pstring& filename){
-    if(next_ld){
-        int temp_ret = next_ld;
-        next_ld = 0;
-        return temp_ret;
-    }
-    if(filename.caselessfind("AMA_", 0)>0) return 20;
-    if(filename.caselessfind("BE2_", 0)>0) return 27;
-    if(filename.caselessfind("BE3_", 0)>0) return 60;
-    if(filename.caselessfind("BEA_", 0)>0) return 27;
-    if(filename.caselessfind("BER_", 0)>0) return 28;
-    if(filename.caselessfind("BU3_", 0)>0) return 57;
-    if(filename.caselessfind("BUT_", 0)>0) return 10;
-    if(filename.caselessfind("CLA_", 0)>0) return 2;
-    if(filename.caselessfind("COR_", 0)>0) return 49;
-    if(filename.caselessfind("CUR_", 0)>0) return 55;
-    if(filename.caselessfind("DLA_", 0)>0) return 47;
-    if(filename.caselessfind("EN2_", 0)>0) return 11;
-    if(filename.caselessfind("ENJ_", 0)>0) return 11;
-    if(filename.caselessfind("ERI_", 0)>0) return 46;
-    if(filename.caselessfind("EV2_", 0)>0) return 34;
-    if(filename.caselessfind("EVA_", 0)>0) return 5;
-    if(filename.caselessfind("FEA_A_", 0)>0) return 56;
-    if(filename.caselessfind("FEA_B_", 0)>0) return 50;
-    if(filename.caselessfind("FUR_", 0)>0) return 52;
-    if(filename.caselessfind("GAP_", 0)>0) return 32;
-    if(filename.caselessfind("GEN_", 0)>0) return 14;
-    if(filename.caselessfind("GEO_", 0)>0) return 7;
-    if(filename.caselessfind("GER_", 0)>0) return 48;
-    if(filename.caselessfind("GOH_", 0)>0) return 17;
-    if(filename.caselessfind("HID_", 0)>0) return 6;
-    if(filename.caselessfind("JES_", 0)>0) return 4;
-    if(filename.caselessfind("KAN_", 0)>0) return 16;
-    if(filename.caselessfind("KAW_", 0)>0) return 24;
-    if(filename.caselessfind("KI2_", 0)>0) return 58;
-    if(filename.caselessfind("KIN_", 0)>0) return 1;
-    if(filename.caselessfind("KIR_", 0)>0) return 9;
-    if(filename.caselessfind("KUM_", 0)>0) return 18;
-    if(filename.caselessfind("LAM_", 0)>0) return 29;
-    if(filename.caselessfind("MAR_", 0)>0) return 13;
-    if(filename.caselessfind("NAN_", 0)>0) return 19;
-    if(filename.caselessfind("NAT_", 0)>0) return 3;
-    if(filename.caselessfind("OKO_", 0)>0) return 21;
-    if(filename.caselessfind("PRO_", 0)>0) return 23;
-    if(filename.caselessfind("RG1_", 0)>0) return 38;
-    if(filename.caselessfind("RG2_", 0)>0) return 39;
-    if(filename.caselessfind("RG3_", 0)>0) return 40;
-    if(filename.caselessfind("RG4_", 0)>0) return 41;
-    if(filename.caselessfind("RG5_", 0)>0) return 42;
-    if(filename.caselessfind("RG6_", 0)>0) return 43;
-    if(filename.caselessfind("RG7_", 0)>0) return 44;
-    if(filename.caselessfind("RIO_", 0)>0) return 53;
-    if(filename.caselessfind("RON_", 0)>0) return 31;
-    if(filename.caselessfind("ROS_", 0)>0) return 12;
-    if(filename.caselessfind("RUD_", 0)>0) return 8;
-    if(filename.caselessfind("S00_", 0)>0) return 37;
-    if(filename.caselessfind("S41_", 0)>0) return 36;
-    if(filename.caselessfind("S45_", 0)>0) return 35;
-    if(filename.caselessfind("SAK_", 0)>0) return 33;
-    if(filename.caselessfind("SHA_", 0)>0) return 15;
-    if(filename.caselessfind("WAL_", 0)>0) return 30;
-    if(filename.caselessfind("WIL_", 0)>0) return 54;
-    if(filename.caselessfind("ZEP_", 0)>0) return 51;
-
-
-    
-    if(filename.caselessfind("KAS_", 0)>0) return 22;
-    if(filename.caselessfind("KLA_", 0)>0) return 2;
-    if(filename.caselessfind("KU2_", 0)>0) return 26;
-    if(filename.caselessfind("NA2_", 0)>0) return 25;
-
-    return 0;
-}
-
 int PonscripterLabel::lspCommand(const pstring& cmd)
 {
 //TODO: add support for "lsp2add" etc.
@@ -1916,56 +1818,6 @@ int PonscripterLabel::lspCommand(const pstring& cmd)
 
     if (sprite2) {
     si.calcAffineMatrix();
-    }
-    
-    int temp_id = set_id(si.file_name);
-    if(temp_id){
-        int cno = no;
-        if(sprite2) cno+=10000;
-        int lii = simul_allocate_lipinfoIndex(cno);
-        CBStringList fileparts;
-        char tempchar;
-        pstring buf2 = "";
-        int tmpx, tmpy;
-        fileparts = si.file_name.split(".", 2);
-        buf2 = fileparts[0];
-        FILE* fp = fileopen(buf2, "r");
-        if(fp == NULL){
-            simul_lip_id[lii] = 0;
-        }
-        else{
-            simul_lip_id[lii] = temp_id;
-            simul_lip_sno[lii] = cno;
-            fscanf(fp, "%d %d", &tmpx, &tmpy);
-            fclose(fp);
-            simul_lip_x[lii] = tmpx;
-            simul_lip_y[lii] = tmpy;
-            for(int i=0; i<3; i++){
-                tempchar = '0'+i;
-                buf2 = fileparts[0];
-                buf2 = ":b;" + buf2 + "_" + tempchar + ".png";
-                simul_lip_info[lii][i].visible(!hidden);
-                simul_lip_info[lii][i].setImageName(buf2);
-                simul_lip_info[lii][i].trans = si.trans;
-                if(sprite2){
-                    simul_lip_info[lii][i].affine_flag = true;
-                    simul_lip_info[lii][i].pos.x = si.pos.x + tmpx*si.scale_x/100;
-                    simul_lip_info[lii][i].pos.y = si.pos.y + tmpy*si.scale_y/100;
-                    simul_lip_info[lii][i].rot = 0;
-                }
-                else{
-                    simul_lip_info[lii][i].affine_flag = false;
-                    simul_lip_info[lii][i].pos.x = si.pos.x + tmpx;
-                    simul_lip_info[lii][i].pos.y = si.pos.y + tmpy;
-                }
-                parseTaggedString(&simul_lip_info[lii][i]);
-                setupAnimationInfo(&simul_lip_info[lii][i]);
-
-                if (sprite2) {
-                    simul_lip_info[lii][i].calcAffineMatrix();
-                }
-            }
-        }
     }
     
     if (si.showing()) dirty_rect.add(sprite2 ? si.bounding_rect : si.pos);
@@ -2182,6 +2034,28 @@ int PonscripterLabel::tachistateCommand(const pstring& cmd)
     script_h.readIntExpr().mutate((tachi_info[2].showing() && tachi_info[2].file_name != "") ? 1 : 0);
     return RET_CONTINUE;
 }
+
+int set_id(pstring& filename){
+    if(filename.caselessfind("KIN", 0)>0) return 1;
+    if(filename.caselessfind("KLA", 0)>0) return 2;
+    if(filename.caselessfind("NAT", 0)>0) return 3;
+    if(filename.caselessfind("JES", 0)>0) return 4;
+    if(filename.caselessfind("EVA", 0)>0) return 5;
+    if(filename.caselessfind("HID", 0)>0) return 6;
+    if(filename.caselessfind("GEO", 0)>0) return 7;
+    if(filename.caselessfind("RUD", 0)>0) return 8;
+    if(filename.caselessfind("KIR", 0)>0) return 9;
+    if(filename.caselessfind("BUT", 0)>0) return 10;
+    if(filename.caselessfind("ENJ", 0)>0) return 11;
+    if(filename.caselessfind("ROS", 0)>0) return 12;
+    if(filename.caselessfind("MAR", 0)>0) return 13;
+    if(filename.caselessfind("GEN", 0)>0) return 14;
+    if(filename.caselessfind("SHA", 0)>0) return 15;
+    if(filename.caselessfind("KAN", 0)>0) return 16;
+    if(filename.caselessfind("GOH", 0)>0) return 17;
+    return 0;
+}
+
 int PonscripterLabel::ldCommand(const pstring& cmd)
 {
     int ret = leaveTextDisplayMode();
@@ -2223,6 +2097,7 @@ int PonscripterLabel::ldCommand(const pstring& cmd)
                 int tmpx, tmpy;
                 fileparts = tachi_info[no].file_name.split(".", 2);
                 buf2 = fileparts[0];
+                buf2 = buf2 + ".txt";
                 FILE* fp = fileopen(buf2, "r");
                 if(fp == NULL){
                     simul_lip_id[no] = 0;
@@ -2239,8 +2114,8 @@ int PonscripterLabel::ldCommand(const pstring& cmd)
                         simul_lip_info[no][i].trans = 256;
                         simul_lip_info[no][i].pos.x = tachi_info[no].pos.x + tmpx;
                         simul_lip_info[no][i].pos.y = tachi_info[no].pos.y + tmpy;
-                        //simul_lip_info[no][i].pos.w = (simul_lip_info[no][i].pos.w*tachi_info[no].pos.w)/1920/2;
-                        //simul_lip_info[no][i].pos.h = (simul_lip_info[no][i].pos.h*tachi_info[no].pos.h)/1920/2;
+                        /*simul_lip_info[no][i].pos.w = (simul_lip_info[no][i].pos.w*tachi_info[no].pos.w)/1920/2;
+                        simul_lip_info[no][i].pos.h = (simul_lip_info[no][i].pos.h*tachi_info[no].pos.h)/1920/2;*/
                         parseTaggedString(&simul_lip_info[no][i]);
                         setupAnimationInfo(&simul_lip_info[no][i]);
                     }
@@ -2251,41 +2126,11 @@ int PonscripterLabel::ldCommand(const pstring& cmd)
         return setEffect(parseEffect(true), true, true);
     }
 }
-int PonscripterLabel::simul_allocate_lipinfoIndex(int no){
-    bool tempflag = true;
-    if(no>=883 && no<=885){
-        return no-883+3;
-    }
-    for(int lii=6; lii<MAX_LIP_NUM; lii++){
-        if(simul_lip_sno[lii]==no)
-            return lii;
-        if(simul_lip_sno[lii]!=-1)
-            tempflag = false;
-    }
-    if(tempflag){
-        simul_lip_info_p = 1;
-        return 6;
-    }
-    int ret_value = simul_lip_info_p;
-    while(1){
-        simul_lip_info_p = (simul_lip_info_p+1)%(MAX_LIP_NUM-6);
-        if(simul_lip_id[simul_lip_info_p] == 0) break;
-        if(ret_value == simul_lip_info_p){
-            simul_lip_info_p++;
-            break;
-        }
-    }
-    return 6+ret_value;
-}
 int PonscripterLabel::simul_allocate_infoIndex(){
     int ret_value = simul_info_p;
     while(1){
         simul_info_p = (simul_info_p+1)%MAX_SIMUL_NUM;
         if(simul_info[simul_info_p].image_name=="") break;
-        if(ret_value == simul_info_p){
-            simul_info_p++;
-            break;
-        }
     }
     return ret_value;
 }
@@ -2299,23 +2144,13 @@ void PonscripterLabel::simul_play(int no){
 }
 
 
-int PonscripterLabel::simul_autobg2Command(const pstring& cmd){
-    int ch_no = script_h.readIntValue();
-    int temp_flag = script_h.readIntValue();
-    autobg2_ch = ch_no;
-    autobg2_flag = temp_flag;
-    return RET_CONTINUE;
-}
 int PonscripterLabel::simul_bg2Command(const pstring& cmd){
     pstring buf;
     int ch_no = script_h.readIntValue();
-    int ii = simul_allocate_infoIndex();
+    int i = simul_allocate_infoIndex();
     buf = script_h.readStrValue();
-    int temp_x = script_h.readIntValue();
-    int temp_y = script_h.readIntValue();
-    int temp_trans = script_h.readIntValue();
     simul_Channel[ch_no].timestamp[0] = 0;
-    simul_Channel[ch_no].infoIndex[0] = ii;
+    simul_Channel[ch_no].infoIndex[0] = i;
     simul_Channel[ch_no].timestamp[1] = 100000000;
     simul_Channel[ch_no].stampNum = 2;
     simul_Channel[ch_no].mode = 0;
@@ -2323,19 +2158,14 @@ int PonscripterLabel::simul_bg2Command(const pstring& cmd){
     simul_Channel[ch_no].priority = 8;
     simul_Channel[ch_no].current = -1;
     simul_Channel[ch_no].visible_with_effect = false;
-    simul_Channel[ch_no].need_load = false;
 
-    simul_info[ii].setImageName(buf);
-    simul_info[ii].visible(true);
-    simul_info[ii].pos.x = temp_x;
-    simul_info[ii].pos.y = temp_y;
-    simul_info[ii].trans = temp_trans;
-    
-    parseTaggedString(&simul_info[ii]);
-    setupAnimationInfo(&simul_info[ii]);
+    simul_info[i].setImageName(buf);
+    simul_info[i].visible(true);
+    simul_info[i].trans = 256;
+    parseTaggedString(&simul_info[i]);
+    setupAnimationInfo(&simul_info[i]);
 
     simul_play(ch_no);
-    bg2_now = ch_no;
     dirty_rect.fill(screen_width, screen_height);
 
     return RET_CONTINUE;
@@ -2346,105 +2176,25 @@ int PonscripterLabel::simul_ch_witheffCommand(const pstring& cmd){
     simul_Channel[ch_no].visible_with_effect = temp_flag;
     return RET_CONTINUE;
 }
-int PonscripterLabel::simul_lipCommand(const pstring& cmd){
-    int temp_flag = script_h.readIntValue();
-    if(temp_flag == 0) simul_Channel[0].mode = 0;
-    simul_Channel[0].pre_mode = temp_flag;
-    lipall_flag = 0;
-    next_voice = 0;
-    return RET_CONTINUE;
-}
-int PonscripterLabel::simul_lipallCommand(const pstring& cmd){
-    int temp_flag = script_h.readIntValue();
-    lipall_flag = temp_flag;
-    return RET_CONTINUE;
-}
 int PonscripterLabel::simul_makerainCommand(const pstring& cmd){
     int ch_no = script_h.readIntValue();
     int ch_pr = script_h.readIntValue();
     int temp_rainPeriod = script_h.readIntValue();
     int temp_rainNum = script_h.readIntValue();
-    int temp_rainWidth = script_h.readIntValue();
-    int temp_rainMinLength = script_h.readIntValue();
-    int temp_rainMaxLength = script_h.readIntValue();
+    int temp_rainLength = script_h.readIntValue();
 
     simul_Channel[ch_no].mode = 10;
     simul_Channel[ch_no].pre_mode = 10;
     simul_Channel[ch_no].priority = ch_pr;
     simul_rainPeriod = temp_rainPeriod;
-    rainpause_flag = 0;
-    if(simul_rainPeriod==100000000){
-        simul_rainPeriod = 100;
-        rainpause_flag = 1;
-    }
     simul_rainNum = temp_rainNum;
-    drop_info.scale_x = temp_rainWidth;
-    simul_rainMinLength = temp_rainMinLength;
-    simul_rainMaxLength = temp_rainMaxLength;
-    rain_now = ch_no;
-    return RET_CONTINUE;
-}
-int PonscripterLabel::simul_nextldCommand(const pstring& cmd){
-    int temp_id = script_h.readIntValue();
-    next_ld = temp_id;
-    return RET_CONTINUE;
-}
-int PonscripterLabel::simul_nextvoiceCommand(const pstring& cmd){
-    int temp_id = script_h.readIntValue();
-    next_voice = temp_id;
+    simul_rainLength = temp_rainLength;
     return RET_CONTINUE;
 }
 int PonscripterLabel::simul_offCommand(const pstring& cmd){
     int ch_no = script_h.readIntValue();
-    if(simul_Channel[ch_no].mode == 11)
-        simul_shakemode = false;
     simul_Channel[ch_no].mode = 0;
     simul_Channel[ch_no].pre_mode = 0;
-
-    int ii, j;
-    for(j=0; j<simul_Channel[ch_no].stampNum; j++){
-        ii = simul_Channel[ch_no].infoIndex[j];
-        if(ii >=0 && ii < MAX_SIMUL_NUM){
-            simul_info[ii].remove();
-        }
-    }
-    if(ch_no == rain_now) rain_now = -1;
-    if(ch_no == shake_now) shake_now = -1;
-    if(ch_no == bg2_now) bg2_now = -1;
-
-    /*SDL_Rect temp_rect={0, 0, screen_width, screen_height};
-    simul_checkFlushSub();
-    if(!(skip_flag || ctrl_pressed_status || skip_to_wait)){
-        flush(refreshMode());
-    }
-    refreshSurface(backup_surface, &temp_rect, REFRESH_NORMAL_MODE);*/
-    return RET_CONTINUE;
-}
-int PonscripterLabel::simul_offallCommand(const pstring& cmd){
-    for(int ch_no = 0; ch_no < MAX_CHANNEL_NUM; ch_no++){
-        if(simul_Channel[ch_no].mode == 11)
-            simul_shakemode = false;
-        simul_Channel[ch_no].mode = 0;
-        simul_Channel[ch_no].pre_mode = 0;
-
-        int ii, j;
-        for(j=0; j<simul_Channel[ch_no].stampNum; j++){
-            ii = simul_Channel[ch_no].infoIndex[j];
-            if(ii >=0 && ii < MAX_SIMUL_NUM){
-                simul_info[ii].remove();
-            }
-        }
-    }
-    rain_now = -1;
-    shake_now = -1;
-    bg2_now = -1;
-
-    /*SDL_Rect temp_rect={0, 0, screen_width, screen_height};
-    simul_checkFlushSub();
-    if(!(skip_flag || ctrl_pressed_status || skip_to_wait)){
-        flush(refreshMode());
-    }
-    refreshSurface(backup_surface, &temp_rect, REFRESH_NORMAL_MODE);*/
     return RET_CONTINUE;
 }
 int PonscripterLabel::simul_playCommand(const pstring& cmd){
@@ -2453,180 +2203,6 @@ int PonscripterLabel::simul_playCommand(const pstring& cmd){
     return RET_CONTINUE;
 }
 int PonscripterLabel::simul_setCommand(const pstring& cmd){
-    pstring buf;
-    int ch_no = script_h.readIntValue();
-    int temp_mode = script_h.readIntValue();
-    int temp_priority = script_h.readIntValue();
-    int temp_preload = script_h.readIntValue();
-    int temp_interval = script_h.readIntValue();
-    buf = script_h.readStrValue();
-    int temp_num = script_h.readIntValue();
-
-    CBStringList fileparts;
-    pstring buf2 = "";
-    pstring buf3 = "";
-    pstring buf4;
-    char tempchar, tempchar2;
-    int ii, p, t;
-    buf.findreplace("01.", ".");
-    fileparts = buf.split(".", 2);
-    buf2 = fileparts[0];
-    buf3 = fileparts[1];
-
-    t = 0;
-    for(p=1; p<=temp_num; p++){
-        buf4 = buf2;
-        if(p>=100){
-            tempchar = '0' + p/100;
-            buf4 = buf4 + tempchar;
-        }
-
-        tempchar = '0' + (p%100)/10;
-        tempchar2 = '0' + p%10;
-
-        buf4 = buf4 + tempchar;
-        buf4 = buf4 + tempchar2;
-        buf4 = buf4 + ".";
-        buf4 = buf4 + buf3;
-
-        ii = simul_allocate_infoIndex();
-
-        simul_info[ii].setImageName(buf4);
-        simul_info[ii].visible(true);
-        simul_info[ii].trans = 256;
-        simul_info[ii].pos.x = 0;
-        simul_info[ii].pos.y = 0;
-        parseTaggedString(&simul_info[ii]);
-        if(temp_preload){
-            setupAnimationInfo(&simul_info[ii]);
-            if(!(simul_info[ii].image_surface)){
-                simul_info[ii].remove();
-                break;
-            }
-        }
-        simul_Channel[ch_no].timestamp[p-1] = t;
-        t += temp_interval;
-        simul_Channel[ch_no].infoIndex[p-1] = ii;
-    }
-    simul_Channel[ch_no].timestamp[p-1] = t;
-    simul_Channel[ch_no].stampNum = p;
-    
-    simul_Channel[ch_no].mode = 0;
-    simul_Channel[ch_no].pre_mode = temp_mode;
-    simul_Channel[ch_no].priority = temp_priority;
-    simul_Channel[ch_no].current = -1;
-    simul_Channel[ch_no].visible_with_effect = false;
-    simul_Channel[ch_no].need_load = 1-temp_preload;
-
-    if(ch_no == rain_now) rain_now = -1;
-    if(ch_no == shake_now) shake_now = -1;
-    if(ch_no == bg2_now) bg2_now = -1;
-
-    return RET_CONTINUE;
-}
-int PonscripterLabel::simul_set_manualCommand(const pstring& cmd){
-    pstring buf;
-    int ch_no = script_h.readIntValue();
-    int temp_mode = script_h.readIntValue();
-    int temp_priority = script_h.readIntValue();
-    int temp_preload = script_h.readIntValue();
-    buf = script_h.readStrValue();
-    int temp_num = script_h.readIntValue();
-
-    CBStringList fileparts;
-    pstring buf2 = "";
-    pstring buf3 = "";
-    pstring buf4;
-    char tempchar, tempchar2;
-    int ii, p, t;
-    buf.findreplace("01.", ".");
-    fileparts = buf.split(".", 2);
-    buf2 = fileparts[0];
-    buf3 = fileparts[1];
-    
-    buf4 = buf2 + "stamp.txt";
-    if(buf4.find(";")){
-        fileparts = buf4.split(";", 2);
-        buf4 = fileparts[1];
-    }
-    FILE* fp = fileopen(buf4, "r");
-    if(fp == NULL){
-        return RET_CONTINUE;
-    }
-
-    t = 0;
-    for(p=1; p<=temp_num; p++){
-        buf4 = buf2;
-        if(p>=100){
-            tempchar = '0' + p/100;
-            buf4 = buf4 + tempchar;
-        }
-
-        tempchar = '0' + (p%100)/10;
-        tempchar2 = '0' + p%10;
-
-        buf4 = buf4 + tempchar;
-        buf4 = buf4 + tempchar2;
-        buf4 = buf4 + ".";
-        buf4 = buf4 + buf3;
-
-        ii = simul_allocate_infoIndex();
-
-        simul_info[ii].setImageName(buf4);
-        simul_info[ii].visible(true);
-        simul_info[ii].trans = 256;
-        simul_info[ii].pos.x = 0;
-        simul_info[ii].pos.y = 0;
-        parseTaggedString(&simul_info[ii]);
-        if(temp_preload){
-            setupAnimationInfo(&simul_info[ii]);
-            if(!(simul_info[ii].image_surface)){
-                simul_info[ii].remove();
-                break;
-            }
-        }
-        fscanf(fp, "%d", &t);
-        simul_Channel[ch_no].timestamp[p-1] = t;
-        simul_Channel[ch_no].infoIndex[p-1] = ii;
-    }
-    fscanf(fp, "%d", &t);
-    fclose(fp);
-    simul_Channel[ch_no].timestamp[p-1] = t;
-    simul_Channel[ch_no].stampNum = p;
-    
-    simul_Channel[ch_no].mode = 0;
-    simul_Channel[ch_no].pre_mode = temp_mode;
-    simul_Channel[ch_no].priority = temp_priority;
-    simul_Channel[ch_no].current = -1;
-    simul_Channel[ch_no].visible_with_effect = false;
-    simul_Channel[ch_no].need_load = 1-temp_preload;
-
-    if(ch_no == rain_now) rain_now = -1;
-    if(ch_no == shake_now) shake_now = -1;
-    if(ch_no == bg2_now) bg2_now = -1;
-
-    return RET_CONTINUE;
-}
-int PonscripterLabel::simul_shakeCommand(const pstring& cmd){
-    int ch_no = script_h.readIntValue();
-    int temp_interval = script_h.readIntValue();
-    int temp_x = script_h.readIntValue();
-    int temp_y = script_h.readIntValue();
-    
-    simul_Channel[ch_no].mode = 11;
-    simul_Channel[ch_no].pre_mode = 11;
-    simul_shakePeriod = temp_interval;
-    simul_shakePx = temp_x;
-    simul_shakePy = temp_y;
-    
-    shake_now = ch_no;
-
-    return RET_CONTINUE;
-}
-int PonscripterLabel::simul_sysoffCommand(const pstring& cmd){
-    int ch_flag = script_h.readIntValue();
-    if(ch_flag) pause_flag = false;
-    else pause_flag = true;
     return RET_CONTINUE;
 }
 
@@ -3528,30 +3104,22 @@ int PonscripterLabel::cspCommand(const pstring& cmd)
             if (!csp2) buttonsRemoveSprite(i);
             si[i].remove();
         }
-        for(int lii=3; lii<MAX_LIP_NUM; lii++){
-            if(simul_voice_id == simul_lip_id[lii]) simul_Channel[0].mode = 0;
-            simul_lip_id[lii] = 0;
-            simul_lip_sno[lii] = -1;
-        }
+        if(simul_voice_id == simul_lip_id[3]) simul_Channel[0].mode = 0;
+        simul_lip_id[3] = 0;
+        if(simul_voice_id == simul_lip_id[4]) simul_Channel[0].mode = 0;
+        simul_lip_id[4] = 0;
+        if(simul_voice_id == simul_lip_id[5]) simul_Channel[0].mode = 0;
+        simul_lip_id[5] = 0;
     }
-    else{
-        for (int no = no1; no <= no2; ++no) if (no >= 0 && no < max) {
-            if (si[no].showing())
-                dirty_rect.add(csp2 ? si[no].bounding_rect : si[no].pos);
+    else for (int no = no1; no <= no2; ++no) if (no >= 0 && no < max) {
+        if (si[no].showing())
+            dirty_rect.add(csp2 ? si[no].bounding_rect : si[no].pos);
 
-            if (!csp2) buttonsRemoveSprite(no);
-            si[no].remove();
-        }
-        if(csp2){
-            no1 += 10000;
-            no2 += 10000;
-        }
-        for(int lii=3; lii<MAX_LIP_NUM; lii++){
-            if(simul_lip_sno[lii] >= no1 && simul_lip_sno[lii] <= no2){
-                if(simul_voice_id == simul_lip_id[lii]) simul_Channel[0].mode = 0;
-                simul_lip_id[lii] = 0;
-                simul_lip_sno[lii] = -1;
-            }
+        if (!csp2) buttonsRemoveSprite(no);
+        si[no].remove();
+        if(no >= 883 && no < 886){
+            if(simul_voice_id == simul_lip_id[no-880]) simul_Channel[0].mode = 0;
+            simul_lip_id[no-880] = 0;
         }
     }
 
@@ -4250,99 +3818,9 @@ int PonscripterLabel::bgCommand(const pstring& cmd)
         int i;
         for (i = 0; i < 3; i++)
             tachi_info[i].remove();
-        for (i = 0; i < MAX_LIP_NUM; i++){
+        for (i = 0; i < 6; i++)
             simul_lip_id[i] = 0;
-            simul_lip_sno[i] = -1;
-        }
         simul_Channel[0].mode = 0;
-
-        if(autobg2_flag){
-            bool fail_flag = true;
-            if (!(e.is_bareword("white") || e.is_bareword("black"))){
-                if(autobg2_ch > 0){
-                    pstring buf = ":b;bmp\\background2\\";
-                    CBStringList fileparts;
-                    fileparts = bg_info.file_name.split("\\", 4);
-                    pstring buf2 = fileparts[3];
-                    buf = buf + buf2;
-
-                    int ch_no = autobg2_ch;
-                    int ii = simul_allocate_infoIndex();
-                    int temp_x = -254;
-                    int temp_y = -143;
-                    int temp_trans = 255;
-                    simul_Channel[ch_no].timestamp[0] = 0;
-                    simul_Channel[ch_no].infoIndex[0] = ii;
-                    simul_Channel[ch_no].timestamp[1] = 100000000;
-                    simul_Channel[ch_no].stampNum = 2;
-                    simul_Channel[ch_no].mode = 0;
-                    simul_Channel[ch_no].pre_mode = 2;
-                    simul_Channel[ch_no].priority = 8;
-                    simul_Channel[ch_no].current = -1;
-                    simul_Channel[ch_no].visible_with_effect = false;
-                    simul_Channel[ch_no].need_load = false;
-
-                    simul_info[ii].setImageName(buf);
-                    simul_info[ii].visible(true);
-                    simul_info[ii].pos.x = temp_x;
-                    simul_info[ii].pos.y = temp_y;
-                    simul_info[ii].trans = temp_trans;
-                    
-                    parseTaggedString(&simul_info[ii]);
-                    setupAnimationInfo(&simul_info[ii]);
-
-                    simul_play(ch_no);
-                    bg2_now = ch_no;
-                    dirty_rect.fill(screen_width, screen_height);
-
-                    if(simul_info[simul_Channel[bg2_now].infoIndex[0]].image_surface)
-                        fail_flag = false;
-                }
-            }
-            if(fail_flag){
-                if(rain_now > 0)
-                    simul_Channel[rain_now].mode = 0;
-                if(shake_now > 0)
-                    simul_Channel[shake_now].mode = 0;
-                if(bg2_now > 0){
-                    simul_Channel[bg2_now].mode = 0;
-                    simul_Channel[bg2_now].pre_mode = 0;
-
-                    int ii;
-                    ii = simul_Channel[bg2_now].infoIndex[0];
-                    if(ii >=0 && ii < MAX_SIMUL_NUM){
-                        simul_info[ii].remove();
-                    }
-                    bg2_now = -1;
-                }
-            }
-            else{
-                if(rain_now > 0)
-                    simul_Channel[rain_now].mode = simul_Channel[rain_now].pre_mode;
-                if(shake_now > 0)
-                    simul_Channel[shake_now].mode = simul_Channel[shake_now].pre_mode;
-            }
-        }
-        else{
-            if(rain_now > 0){
-                if(!simul_Channel[rain_now].visible_with_effect && !rainpause_flag){
-                    simul_Channel[rain_now].mode = 0;
-                    simul_Channel[rain_now].pre_mode = 0;
-                    rain_now = -1;
-                }
-            }
-            if(bg2_now > 0){
-                simul_Channel[bg2_now].mode = 0;
-                simul_Channel[bg2_now].pre_mode = 0;
-
-                int ii;
-                ii = simul_Channel[bg2_now].infoIndex[0];
-                if(ii >=0 && ii < MAX_SIMUL_NUM){
-                    simul_info[ii].remove();
-                }
-                bg2_now = -1;
-            }
-        }
 
         bg_info.remove();
         bg_info.file_name = e.as_string();

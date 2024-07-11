@@ -1,0 +1,163 @@
+https://github.com/brotherq95/ponscripter-fork
+
+new features)
+lipsync (exe built-in)
+rain effect
+boat effect
+draw images with timestamp (or interval)
+
+
+
+channel : provide 10 channels, channel number : 0~9 (MAX_CHANNEL_NUM = 10)
+!! channel 0 is used for voice !!
+override when channel number is same
+
+mode :  0 - off, 1 - once, 2 - loop
+
+priority : specifies the image priority when overlap
+In the same priority, the lower#channel is seen above
+(look at the list below)
+
+[SCREEN]
+(-1) : forced to show during effect
+(1)
+[button]
+(2)
+[text window]
+(3)
+[sprite2] (!windowback_flag)
+(4)
+[sprite] (above z_order, look 'humanz' command)
+(5)
+[sprite2] (windowback_flag)
+(6)
+[standing]
+(7)
+[sprite] (below z_order)
+(8) : recommended use for transparent background (rainy)
+(9) : recommended use for rain
+[background]
+
+
+■ simul_play NUM
+channel
+
+play the channel (set with simul_set)
+for proper sync, set channel with pre_load before play .ogg
+
+
+■ simul_off NUM
+channel
+
+off channel
+
+
+■ simul_offall
+
+off all channel
+
+
+■ simul_sysoff NUM
+on(1)/off(0)
+
+on/off whole system
+
+
+■ simul_lip NUM
+on(1)/off(0)
+
+on/off lipsync channel(channel 0)
+you can use 'simul_off 0', but recommended to use 'simul_lip 0'
+
+
+■ simul_nextld NUM
+id (based on script, ex. id 1 : KIN, id 27 : BEA)
+
+force id of next ld (or mld)
+
+
+■ simul_nextvoice NUM
+id
+
+force id of next voice (until 'simul_nextvoice 0' called)
+
+
+■ simul_lipall NUM
+on(1)/off(0)
+
+on(1) to enable all lips of standing images with same id (ex. lots of beatrice)
+
+
+■ simul_ch_witheff NUM NUM
+channel, on(1)/off(0)
+
+on(1) to active channel when drawing effect, like priority -1
+
+
+■ simul_set NUM NUM NUM NUM NUM STR NUM
+channel, mode, priority, pre_load, interval(ms), first image filename, number of images
+Example)
+simul_set 2, 1, 1, 1, 30, ":bc;animation\door\01.jpg", 74
+simul_play 2
+
+from the first image(ex. ani01.png, 01.jpg... must start with 01), draw the images for every interval
+(image number : 01~99, 100~999)
+pre_load : off(0) to postpone loading : load separately, just before that image is drawn (use for long interval)
+on(1) to load all images immediately
+(ex. set between text and @, pre_load while user reads text, so prevent feeling the load)
+
+
+■ simul_set_manual NUM NUM NUM NUM STR NUM
+channel, mode, priority, pre_load, first image filename, number of images
+Example)
+simul_set_manual 2, 1, 1, 1, ":b;movie\ep8_wd_subtitles\01.png", 19
+simul_ch_witheff 2, 1
+simul_play 2
+
+like simul_set, but use timestamps instead of interval
+require .txt file that contain timestamps
+ex) 'ani01.png', 'ani02.png', ..., 'ani05.png'
+'anistamp.txt' has the following timestamps
+(for 01.jpg, stamp.txt)
+200 // at 200ms, draw ani01.png
+400
+700
+1000
+1200
+1400 // at 1400ms, off all images or start loop
+
+
+■ simul_makerain NUM NUM NUM NUM NUM NUM NUM
+channel, priority, interval(ms), num of rain, width scale of rain(% of origin), min length of rain(% of screen_height), max length
+Example)
+simul_makerain 7, 9, 15, 300, 200, 20, 30
+simul_ch_witheff 7, 1
+
+raindrop with random length generated
+off when next 'bg' called && 'simul_ch_witheff' was (0)
+set interval 100000000(Exception) to pause rain better (in this case, doesn't off when next 'bg' called)
+(no need 'simul_play')
+
+
+■ simul_bg2 NUM STR NUM NUM NUM
+channel, image filename, pos.x, pos.y, opacity
+Example)
+simul_makerain 7, 9, 15, 100, 100, 5, 10
+simul_bg2 9, ":b;bmp\background2\garden_r1an.png", -254, -143, 255
+(-254, -143 for 2429x1366 image)
+
+use to draw additional background (priority 8)
+off when next 'bg' called
+(no need 'simul_play')
+
+
+■ simul_shake NUM NUM NUM NUM
+channel, interval(ms), x period, y period(ms)
+Example)
+simul_shake 8, 15, 2500, 2000
+
+at boat scene, shake screen (before text window, priority 3~9)
+shake x 20, y 80 at 1920x1080
+(recommended to use with simul_bg2)
+(recommended to keep useing the same channel)
+(no need 'simul_play')
