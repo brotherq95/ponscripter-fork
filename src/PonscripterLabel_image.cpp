@@ -528,6 +528,23 @@ PonscripterLabel::simul_checkFlushSub(){
             }
             if(simul_Channel[i].mode > 2 || simul_Channel[i].mode <= 0)
                 continue;
+            if(simul_Channel[i].mode == 1 && simul_Channel[i].fade_time){
+                if(now < simul_Channel[i].startTick + simul_Channel[i].fade_time){
+                    channel_flag = true;
+                    dirty_rect.fill(screen_width, screen_height);
+                    simul_info[simul_Channel[i].infoIndex[0]].trans = simul_Channel[i].fade_trans * (now - simul_Channel[i].startTick) / (simul_Channel[i].fade_time);
+                }
+                else if(now > simul_Channel[i].timestamp[1] - simul_Channel[i].fade_time){
+                    channel_flag = true;
+                    dirty_rect.fill(screen_width, screen_height);
+                    simul_info[simul_Channel[i].infoIndex[0]].trans = simul_Channel[i].fade_trans * (simul_Channel[i].timestamp[1] - now) / (simul_Channel[i].fade_time);
+                }
+                else{
+                    channel_flag = true;
+                    dirty_rect.fill(screen_width, screen_height);
+                    simul_info[simul_Channel[i].infoIndex[0]].trans = simul_Channel[i].fade_trans;
+                }
+            }
             while(now >= simul_Channel[i].timestamp[1+simul_Channel[i].current]){
                 channel_flag = true;
                 if(simul_Channel[i].current != -1){
@@ -680,7 +697,7 @@ PonscripterLabel::simul_refreshSub(SDL_Surface* surface, SDL_Rect &clip, int pri
         simul_Channel[0].mode = 0;
         return;
     }
-    if(setEffect_flag) return;
+    //if(setEffect_flag) return;
     int temp_infoIndex;
     for(int i=MAX_CHANNEL_NUM-1; i>=0; i--){
         if(simul_Channel[i].mode && (simul_Channel[i].priority == priority || (doing_effect && priority == -1 && simul_Channel[i].visible_with_effect))){
@@ -691,6 +708,8 @@ PonscripterLabel::simul_refreshSub(SDL_Surface* surface, SDL_Rect &clip, int pri
             if(simul_Channel[i].mode > 2 || simul_Channel[i].mode <= 0)
                 continue;
             if(simul_Channel[i].current == -1)
+                continue;
+            if(setEffect_flag && simul_Channel[i].visible_with_effect)
                 continue;
             temp_infoIndex = simul_Channel[i].infoIndex[simul_Channel[i].current];
             if(temp_infoIndex < 0)
@@ -741,6 +760,7 @@ PonscripterLabel::refreshSurface(SDL_Surface* surface, SDL_Rect* clip_src,
 
     if(!from_simul){
         simul_checkFlushSub();
+    }
         if (surface == accumulation_surface){
             SDL_Rect temp_rect={0, 0, screen_width, screen_height};
             bool temp_flag = setEffect_flag;
@@ -748,10 +768,14 @@ PonscripterLabel::refreshSurface(SDL_Surface* surface, SDL_Rect* clip_src,
             refreshSurface(simul_src_surface, &temp_rect, refresh_mode);
             setEffect_flag = temp_flag;
         }
-    }
+    //}
 
     SDL_Rect clip = { 0, 0, surface->w, surface->h };
     if (clip_src && AnimationInfo::doClipping(&clip, clip_src)) return;
+
+    if(shake_now>0){
+        clip = {0, 0, screen_width, screen_height};
+    }
 
     int i, top;
     SDL_BlitSurface( bg_info.image_surface, &clip, surface, &clip );

@@ -329,6 +329,7 @@ sfunc_lut_t::sfunc_lut_t() {
     dict["simul_play"]       = &PonscripterLabel::simul_playCommand;
     dict["simul_set"]        = &PonscripterLabel::simul_setCommand;
     dict["simul_set_manual"] = &PonscripterLabel::simul_set_manualCommand;
+    dict["simul_set_one"]    = &PonscripterLabel::simul_set_oneCommand;
     dict["simul_shake"]      = &PonscripterLabel::simul_shakeCommand;
     dict["simul_sysoff"]     = &PonscripterLabel::simul_sysoffCommand;
     dict["sp_rgb_gradation"] = &PonscripterLabel::sp_rgb_gradationCommand;

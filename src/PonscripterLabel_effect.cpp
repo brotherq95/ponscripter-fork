@@ -44,7 +44,8 @@ int PonscripterLabel::setEffect(Effect& effect, bool generate_effect_dst, bool u
     int effect_no = effect.effect;
     if (effect_cut_flag && skip_flag) effect_no = 1;
 
-    if(!pause_sound_stack && effect_flag && !(skip_flag || ctrl_pressed_status || skip_to_wait)) SDL_BlitSurface(simul_src_surface, NULL, effect_src_surface, NULL);
+    //if(effect_flag && !(skip_flag || ctrl_pressed_status || skip_to_wait)) SDL_BlitSurface(simul_src_surface, NULL, effect_src_surface, NULL);
+    if(effect_flag) SDL_BlitSurface(simul_src_surface, NULL, effect_src_surface, NULL);
     else SDL_BlitSurface(accumulation_surface, NULL, effect_src_surface, NULL);
 
     if (generate_effect_dst){
@@ -415,6 +416,7 @@ int PonscripterLabel::doEffect(Effect& effect, bool clear_dirty_region)
     //SDL_BlitSurface(accumulation_surface, NULL, simul_src_surface, NULL);
     SDL_BlitSurface(effect_dst_surface, &dirty_rect.bounding_box, simul_src_surface, &dirty_rect.bounding_box);
     SDL_Rect temp_rect={0, 0, screen_width, screen_height};
+    simul_checkFlushSub();
     //simul_refreshSub(accumulation_surface, temp_rect, -1);
 
     effect_counter += effect_timer_resolution;
@@ -426,7 +428,6 @@ int PonscripterLabel::doEffect(Effect& effect, bool clear_dirty_region)
         return RET_WAIT | RET_REREAD;
     }
     else {
-        doing_effect = false;
         SDL_BlitSurface(effect_dst_surface, &dirty_rect.bounding_box,
 			accumulation_surface, &dirty_rect.bounding_box);
         simul_refreshSub(accumulation_surface, temp_rect, -1);
@@ -434,6 +435,8 @@ int PonscripterLabel::doEffect(Effect& effect, bool clear_dirty_region)
 	    flush(REFRESH_NONE_MODE, NULL, clear_dirty_region);
         if (effect_no == 1)
 	    effect_counter = 0;
+    
+        doing_effect = false;
 
         effect.duration = prevduration;
         event_mode = IDLE_EVENT_MODE;

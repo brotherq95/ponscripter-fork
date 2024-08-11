@@ -1834,8 +1834,8 @@ int PonscripterLabel::set_id(pstring& filename){
     if(filename.caselessfind("ERI_", 0)>0) return 46;
     if(filename.caselessfind("EV2_", 0)>0) return 34;
     if(filename.caselessfind("EVA_", 0)>0) return 5;
-    if(filename.caselessfind("FEA_A_", 0)>0) return 56;
-    if(filename.caselessfind("FEA_B_", 0)>0) return 50;
+    if(filename.caselessfind("FEA_A", 0)>0) return 56;
+    if(filename.caselessfind("FEA_B", 0)>0) return 50;
     if(filename.caselessfind("FUR_", 0)>0) return 52;
     if(filename.caselessfind("GAP_", 0)>0) return 32;
     if(filename.caselessfind("GEN_", 0)>0) return 14;
@@ -2517,6 +2517,7 @@ int PonscripterLabel::simul_setCommand(const pstring& cmd){
     simul_Channel[ch_no].current = -1;
     simul_Channel[ch_no].visible_with_effect = false;
     simul_Channel[ch_no].need_load = 1-temp_preload;
+    simul_Channel[ch_no].fade_time = 0;
 
     if(ch_no == rain_now) rain_now = -1;
     if(ch_no == shake_now) shake_now = -1;
@@ -2600,10 +2601,54 @@ int PonscripterLabel::simul_set_manualCommand(const pstring& cmd){
     simul_Channel[ch_no].current = -1;
     simul_Channel[ch_no].visible_with_effect = false;
     simul_Channel[ch_no].need_load = 1-temp_preload;
+    simul_Channel[ch_no].fade_time = 0;
 
     if(ch_no == rain_now) rain_now = -1;
     if(ch_no == shake_now) shake_now = -1;
     if(ch_no == bg2_now) bg2_now = -1;
+
+    return RET_CONTINUE;
+}
+int PonscripterLabel::simul_set_oneCommand(const pstring& cmd){
+    pstring buf;
+    int ch_no = script_h.readIntValue();
+    int temp_priority = script_h.readIntValue();
+    int temp_time = script_h.readIntValue();
+    buf = script_h.readStrValue();
+    int temp_x = script_h.readIntValue() * screen_ratio1 / screen_ratio2 * res_multiplier;
+    int temp_y = script_h.readIntValue() * screen_ratio1 / screen_ratio2 * res_multiplier;
+    int temp_fade = script_h.hasMoreArgs() ? script_h.readIntValue() : 0;
+    int temp_trans = script_h.hasMoreArgs() ? script_h.readIntValue() : 256;
+
+    int ii = simul_allocate_infoIndex();
+
+    simul_info[ii].visible(true);
+    simul_info[ii].setImageName(buf);
+    simul_info[ii].pos.x = temp_x;
+    simul_info[ii].pos.y = temp_y;
+    simul_info[ii].trans = temp_trans;
+    parseTaggedString(&simul_info[ii]);
+    setupAnimationInfo(&simul_info[ii]);
+    if(simul_info[ii].image_surface){
+        simul_Channel[ch_no].timestamp[0] = 0;
+        simul_Channel[ch_no].infoIndex[0] = ii;
+
+        simul_Channel[ch_no].timestamp[1] = temp_time;
+        simul_Channel[ch_no].stampNum = 2;
+        
+        simul_Channel[ch_no].mode = 0;
+        simul_Channel[ch_no].pre_mode = 1;
+        simul_Channel[ch_no].priority = temp_priority;
+        simul_Channel[ch_no].current = -1;
+        simul_Channel[ch_no].visible_with_effect = false;
+        simul_Channel[ch_no].need_load = 0;
+        simul_Channel[ch_no].fade_time = temp_fade;
+        simul_Channel[ch_no].fade_trans = temp_trans;
+
+        if(ch_no == rain_now) rain_now = -1;
+        if(ch_no == shake_now) shake_now = -1;
+        if(ch_no == bg2_now) bg2_now = -1;
+    }
 
     return RET_CONTINUE;
 }

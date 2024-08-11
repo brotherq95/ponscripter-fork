@@ -130,7 +130,7 @@ ex) 'ani01.png', 'ani02.png', ..., 'ani05.png'
 ■ simul_set_one NUM NUM NUM STR NUM NUM [, NUM] [, NUM]
 channel, priority, display time(ms, include fade time), image filename, Top-left X-coordinate, Y, fade time(ms, at start&end), Opacity value
 Example)
-simul_set_once 2, 1, 4000, ":s#00ffff^【BGM】♪" + $BGM_Title + "", 18, 7, 500
+simul_set_one 2, 1, 4000, ":s#00ffff^【BGM】♪" + $BGM_Title + "", 18, 7, 500
 simul_ch_witheff 2, 1
 simul_play 2
 

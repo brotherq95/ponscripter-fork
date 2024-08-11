@@ -366,6 +366,7 @@ public:
     int simul_playCommand(const pstring& cmd);
     int simul_setCommand(const pstring& cmd);
     int simul_set_manualCommand(const pstring& cmd);
+    int simul_set_oneCommand(const pstring& cmd);
     int simul_shakeCommand(const pstring& cmd);
     int simul_sysoffCommand(const pstring& cmd);
 
@@ -988,6 +989,8 @@ private:
         int pre_mode;
         int priority;
         int current;
+        int fade_time;
+        int fade_trans;
         bool visible_with_effect;
         bool need_load;
     };
