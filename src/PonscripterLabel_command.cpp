@@ -1835,7 +1835,9 @@ int PonscripterLabel::set_id(pstring& filename){
     if(filename.caselessfind("EV2_", 0)>0) return 34;
     if(filename.caselessfind("EVA_", 0)>0) return 5;
     if(filename.caselessfind("FEA_A", 0)>0) return 56;
+    if(filename.caselessfind("FEA_DEFA1", 0)>0) return 56;
     if(filename.caselessfind("FEA_B", 0)>0) return 50;
+    if(filename.caselessfind("FEA_DEFA2", 0)>0) return 50;
     if(filename.caselessfind("FUR_", 0)>0) return 52;
     if(filename.caselessfind("GAP_", 0)>0) return 32;
     if(filename.caselessfind("GEN_", 0)>0) return 14;
