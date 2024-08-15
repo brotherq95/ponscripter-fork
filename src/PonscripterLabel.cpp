@@ -1343,6 +1343,24 @@ int PonscripterLabel::init(const char* preferred_script)
     parseTaggedString(&drop_info);
     setupAnimationInfo(&drop_info);
 
+    auto_info.reset();
+    auto_info.visible(true);
+    auto_info.setImageName(":ba;bmp\\auto_ico.png");
+    auto_info.pos.x = screen_width - 90;
+    auto_info.pos.y = 20;
+    auto_info.trans = 256;
+    parseTaggedString(&auto_info);
+    setupAnimationInfo(&auto_info);
+    
+    skip_info.reset();
+    skip_info.visible(true);
+    skip_info.setImageName(":ba;bmp\\skip_ico.png");
+    skip_info.pos.x = screen_width - 90;
+    skip_info.pos.y = 20;
+    skip_info.trans = 256;
+    parseTaggedString(&skip_info);
+    setupAnimationInfo(&skip_info);
+
     // ----------------------------------------
     // Sound related variables
     wave_file_name.trunc(0);
@@ -2490,9 +2508,11 @@ void PonscripterLabel::setAutoMode(bool mode)
         // auto-mode timer on exiting auto mode.
         if (!mode) advancePhase(0);
     }
+    dirty_rect.add(auto_info.pos);
 }
 
 void PonscripterLabel::setSkipMode(bool mode)
 {
     skip_flag = mode;
+    dirty_rect.add(skip_info.pos);
 }

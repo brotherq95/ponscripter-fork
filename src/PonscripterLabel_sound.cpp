@@ -403,7 +403,7 @@ int PonscripterLabel::playOGG(int format, unsigned char* buffer, long length, bo
             }
         }
     }
-    if(pause_flag || skip_flag || ctrl_pressed_status || skip_to_wait){
+    /*if(pause_flag || skip_flag || ctrl_pressed_status || skip_to_wait){
         index_offset = 0;
         pause_sound_stack = 1;
     }
@@ -411,7 +411,8 @@ int PonscripterLabel::playOGG(int format, unsigned char* buffer, long length, bo
         index_offset = 0;
         pause_sound_stack--;
     }
-    else if(simul_Channel[0].pre_mode==0){
+    else*/
+    if(simul_Channel[0].pre_mode==0){
         index_offset = 0;
     }
 

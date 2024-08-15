@@ -1019,6 +1019,9 @@ private:
     bool simul_shakemode, simul_shakeflag;
     Uint32 simul_shakestartTick, simul_shakePeriod;
     int simul_shakePx, simul_shakePy, simul_shakex, simul_shakey;
+
+    AnimationInfo auto_info;
+    AnimationInfo skip_info;
     
     bool simul_checkFlushSub();
     void simul_checkFlush();

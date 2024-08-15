@@ -699,7 +699,7 @@ PonscripterLabel::simul_refreshSub(SDL_Surface* surface, SDL_Rect &clip, int pri
     }
     //if(setEffect_flag) return;
     int temp_infoIndex;
-    for(int i=MAX_CHANNEL_NUM-1; i>=0; i--){
+    for(int i=0; i<MAX_CHANNEL_NUM; i++){
         if(simul_Channel[i].mode && (simul_Channel[i].priority == priority || (doing_effect && priority == -1 && simul_Channel[i].visible_with_effect))){
             if(simul_Channel[i].mode == 10){
                 SDL_BlitSurface( simul_rain_surface, &clip, surface, &clip );
@@ -794,7 +794,10 @@ PonscripterLabel::refreshSurface(SDL_Surface* surface, SDL_Rect* clip_src,
             if(i==601) continue;
             if(i==602) continue;
             if (sprite_info[i].image_surface && sprite_info[i].showing()){
-                drawTaggedSurface2(surface, &sprite_info[i], clip);
+                if(604<=i && i<=607)
+                    drawTaggedSurface(surface, &sprite_info[i], clip);
+                else
+                    drawTaggedSurface2(surface, &sprite_info[i], clip);
                 if(i == simul_voice_sno) simul_refreshSub(surface, clip, 11);
             }
         }
@@ -841,7 +844,10 @@ PonscripterLabel::refreshSurface(SDL_Surface* surface, SDL_Rect* clip_src,
             if(i==601) continue;
             if(i==602) continue;
             if (sprite_info[i].image_surface && sprite_info[i].showing()){
-                drawTaggedSurface2(surface, &sprite_info[i], clip);
+                if(604<=i && i<=607)
+                    drawTaggedSurface(surface, &sprite_info[i], clip);
+                else
+                    drawTaggedSurface2(surface, &sprite_info[i], clip);
                 if(i == simul_voice_sno) simul_refreshSub(surface, clip, 11);
             }
         }
@@ -904,6 +910,18 @@ PonscripterLabel::refreshSurface(SDL_Surface* surface, SDL_Rect* clip_src,
 
     simul_refreshSub(surface, clip, 1);
     simul_refreshSub(surface, clip, -1);
+
+
+    clip = {screen_width - 90, 20, 90, 100};
+    if(skip_flag || ctrl_pressed_status)
+        drawTaggedSurface(surface, &skip_info, clip);
+    else if(automode_flag)
+        drawTaggedSurface(surface, &auto_info, clip);
+    else{
+        skip_info.trans = 0;
+        drawTaggedSurface(surface, &skip_info, clip);
+        skip_info.trans = 256;
+    }
 }
 
 

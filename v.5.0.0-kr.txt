@@ -15,7 +15,7 @@ override when channel number is same
 mode :  0 - off, 1 - once, 2 - loop
 
 priority : specifies the image priority when overlap
-In the same priority, the lower#channel is seen above
+In the same priority, the lower#channel is seen below
 (look at the list below)
 
 [SCREEN]
