@@ -378,6 +378,11 @@ int PonscripterLabel::clickWait(bool display_char)
     bool enabled = current_read_language == -1 || current_read_language == current_language;
     display_char &= enabled;
 
+    if(simul_font_mult != 100){
+        sentence_font.set_size(simul_font_size);
+        simul_font_mult = 100;
+    }
+
     if ((skip_flag || draw_one_page_flag || ctrl_pressed_status || !enabled) &&
         !textgosub_label) {
         clickstr_state = CLICK_NONE;
@@ -434,6 +439,13 @@ int PonscripterLabel::clickNewPage(bool display_char)
     const char* c = script_h.getStrBuf(string_buffer_offset);
 
     bool enabled = current_read_language == -1 || current_read_language == current_language;
+
+    
+    if(simul_font_mult != 100){
+        sentence_font.set_size(simul_font_size);
+        simul_font_mult = 100;
+    }
+    
     if (enabled) {
         clickstr_state = CLICK_NEWPAGE;
     } else {

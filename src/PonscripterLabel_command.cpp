@@ -149,8 +149,10 @@ int PonscripterLabel::vspCommand(const pstring& cmd)
     }
     for(int lii=3; lii<MAX_LIP_NUM; lii++){
         if(simul_lip_sno[lii] >= no1 && simul_lip_sno[lii] <= no2){
+            simul_hole_info[lii].visible(vis);
             for(int i=0; i<3; i++){
                 simul_lip_info[lii][i].visible(vis);
+                //simul_lip_info2[lii][i].visible(vis);
             }
         }
     }
@@ -338,6 +340,9 @@ int PonscripterLabel::talCommand(const pstring& cmd)
             simul_lip_info[no][0].trans = trans;
             simul_lip_info[no][1].trans = trans;
             simul_lip_info[no][2].trans = trans;
+            //simul_lip_info2[no][0].trans = trans;
+            //simul_lip_info2[no][1].trans = trans;
+            //simul_lip_info2[no][2].trans = trans;
             dirty_rect.add(tachi_info[no].pos);
         }
 
@@ -776,6 +781,7 @@ void PonscripterLabel::DoSetwindow(PonscripterLabel::WindowDef& def)
     sentence_font.area_x = def.width;
     sentence_font.area_y = def.height;
     sentence_font.set_size(def.font_size);
+    simul_font_size = def.font_size;
     sentence_font.set_mod_size(0);
     sentence_font.pitch_x   = def.pitch_x;
     sentence_font.pitch_y   = def.pitch_y;
@@ -1473,23 +1479,44 @@ int PonscripterLabel::mspCommand(const pstring& cmd)
 
     int cno = no;
     if(sprite2) cno+=10000;
-    for(int lii=3; lii<MAX_LIP_NUM; lii++){
-        if(simul_lip_sno[lii] == cno){
+
+    /*for(int lii=3; lii<MAX_LIP_NUM; lii++){
+        if(simul_lip_sno[lii] == cno){*/
+    int lii;
+    if(sprite2) lii = simul_lip_lii2[no];
+    else lii = simul_lip_lii[no];
+    if(lii >= 0){
+            simul_hole_info[lii].pos.x = si.pos.x;
+            simul_hole_info[lii].pos.y = si.pos.y;
+            simul_hole_info[lii].trans = si.trans;
+            if(modsp2){
+                simul_hole_info[lii].scale_x = si.scale_x;
+                simul_hole_info[lii].scale_y = si.scale_y;
+                simul_hole_info[lii].rot = si.rot;
+                simul_hole_info[lii].calcAffineMatrix();
+            }
             for(int i=0; i<3; i++){
                 simul_lip_info[lii][i].trans = si.trans;
+                //simul_lip_info2[lii][i].trans = si.trans;
                 if(sprite2){
                     simul_lip_info[lii][i].pos.x = si.pos.x + simul_lip_x[lii]*si.scale_x/100;
                     simul_lip_info[lii][i].pos.y = si.pos.y + simul_lip_y[lii]*si.scale_y/100;
                     simul_lip_info[lii][i].rot = 0;
                     simul_lip_info[lii][i].calcAffineMatrix();
+                    /*simul_lip_info2[lii][i].pos.x = si.pos.x + simul_lip_x[lii]*si.scale_x/100;
+                    simul_lip_info2[lii][i].pos.y = si.pos.y + simul_lip_y[lii]*si.scale_y/100;
+                    simul_lip_info2[lii][i].rot = 0;
+                    simul_lip_info2[lii][i].calcAffineMatrix();*/
                 }
                 else{
                     simul_lip_info[lii][i].pos.x = si.pos.x + simul_lip_x[lii];
                     simul_lip_info[lii][i].pos.y = si.pos.y + simul_lip_y[lii];
+                    /*simul_lip_info2[lii][i].pos.x = si.pos.x + simul_lip_x[lii];
+                    simul_lip_info2[lii][i].pos.y = si.pos.y + simul_lip_y[lii];*/
                 }
             }
-        }
     }
+    //}
 
     return RET_CONTINUE;
 }
@@ -1847,6 +1874,7 @@ int PonscripterLabel::set_id(pstring& filename){
     if(filename.caselessfind("HID_", 0)>0) return 6;
     if(filename.caselessfind("JES_", 0)>0) return 4;
     if(filename.caselessfind("KAN_", 0)>0) return 16;
+    if(filename.caselessfind("KA2_", 0)>0) return 16;
     if(filename.caselessfind("KAW_", 0)>0) return 24;
     if(filename.caselessfind("KI2_", 0)>0) return 58;
     if(filename.caselessfind("KIN_", 0)>0) return 1;
@@ -1920,8 +1948,18 @@ int PonscripterLabel::lspCommand(const pstring& cmd)
     si.calcAffineMatrix();
     }
     
+    if(sprite2) simul_lip_lii2[no] = -1;
+    else simul_lip_lii[no] = -1;
+    //if(sprite2) simul_lip_hole2[no] = 0;
+    //else simul_lip_hole[no] = 0;
     int temp_id = set_id(si.file_name);
     if(temp_id){
+        if(temp_id == simul_voice_id){
+            //simul_Channel[0].mode = 0;
+            //lip_effpause_flag = 1;
+            //simul_voice_sno = -1;
+            //simul_voice_id = 0;
+        }
         int cno = no;
         if(sprite2) cno+=10000;
         int lii = simul_allocate_lipinfoIndex(cno);
@@ -1942,6 +1980,9 @@ int PonscripterLabel::lspCommand(const pstring& cmd)
             fclose(fp);
             simul_lip_x[lii] = tmpx;
             simul_lip_y[lii] = tmpy;
+
+            if(sprite2) simul_lip_lii2[no] = lii;
+            else simul_lip_lii[no] = lii;
             for(int i=0; i<3; i++){
                 tempchar = '0'+i;
                 buf2 = fileparts[0];
@@ -1949,24 +1990,117 @@ int PonscripterLabel::lspCommand(const pstring& cmd)
                 simul_lip_info[lii][i].visible(!hidden);
                 simul_lip_info[lii][i].setImageName(buf2);
                 simul_lip_info[lii][i].trans = si.trans;
+                /*simul_lip_info2[lii][i].visible(!hidden);
+                simul_lip_info2[lii][i].setImageName(buf2);
+                simul_lip_info2[lii][i].trans = si.trans;*/
                 if(sprite2){
                     simul_lip_info[lii][i].affine_flag = true;
                     simul_lip_info[lii][i].pos.x = si.pos.x + tmpx*si.scale_x/100;
                     simul_lip_info[lii][i].pos.y = si.pos.y + tmpy*si.scale_y/100;
                     simul_lip_info[lii][i].rot = 0;
+                    /*simul_lip_info2[lii][i].affine_flag = true;
+                    simul_lip_info2[lii][i].pos.x = si.pos.x + tmpx*si.scale_x/100;
+                    simul_lip_info2[lii][i].pos.y = si.pos.y + tmpy*si.scale_y/100;
+                    simul_lip_info2[lii][i].rot = 0;*/
                 }
                 else{
                     simul_lip_info[lii][i].affine_flag = false;
                     simul_lip_info[lii][i].pos.x = si.pos.x + tmpx;
                     simul_lip_info[lii][i].pos.y = si.pos.y + tmpy;
+                    /*simul_lip_info2[lii][i].affine_flag = false;
+                    simul_lip_info2[lii][i].pos.x = si.pos.x + tmpx;
+                    simul_lip_info2[lii][i].pos.y = si.pos.y + tmpy;*/
                 }
                 parseTaggedString(&simul_lip_info[lii][i]);
                 setupAnimationInfo(&simul_lip_info[lii][i]);
+                /*parseTaggedString(&simul_lip_info2[lii][i]);
+                setupAnimationInfo(&simul_lip_info2[lii][i]);*/
 
                 if (sprite2) {
                     simul_lip_info[lii][i].calcAffineMatrix();
+                    //simul_lip_info2[lii][i].calcAffineMatrix();
                 }
             }
+
+            buf2 = fileparts[0];
+            buf2 = ":b;" + buf2 + "_b.png";
+            simul_hole_info[lii].visible(!hidden);
+            simul_hole_info[lii].setImageName(buf2);
+            simul_hole_info[lii].trans = si.trans;
+            simul_hole_info[lii].affine_flag = false;
+            simul_hole_info[lii].pos.x = si.pos.x;
+            simul_hole_info[lii].pos.y = si.pos.y;
+            simul_hole_info[lii].trans = si.trans;
+            if(sprite2){
+                simul_hole_info[lii].affine_flag = true;
+                simul_hole_info[lii].scale_x = si.scale_x;
+                simul_hole_info[lii].scale_y = si.scale_y;
+                simul_hole_info[lii].rot = si.rot;
+            }
+            parseTaggedString(&simul_hole_info[lii]);
+            setupAnimationInfo(&simul_hole_info[lii]);
+            if(sprite2){
+                simul_hole_info[lii].calcAffineMatrix();
+            }
+            /*if(true){
+                int save_x, save_y, save_lx, save_ly, save_trans;
+                SDL_Surface *surface = AnimationInfo::allocSurface(simul_lip_info[lii][0].pos.w, simul_lip_info[lii][0].pos.h);
+                SDL_SetSurfaceAlphaMod(surface, SDL_ALPHA_OPAQUE);
+                SDL_Rect temp_rect={0, 0, simul_lip_info[lii][0].pos.w, simul_lip_info[lii][0].pos.h};
+                SDL_Rect temp_rect_tl={0, 0, 1, 1};
+                
+                save_x = si.pos.x;
+                save_y = si.pos.y;
+                save_trans = si.trans;
+
+                si.pos.x = 0 - tmpx;
+                si.pos.y = 0 - tmpy;
+                si.trans = 256;
+
+                for(int j=0; j<3; j++){
+                    save_lx = simul_lip_info[lii][j].pos.x;
+                    save_ly = simul_lip_info[lii][j].pos.y;
+                    simul_lip_info[lii][j].pos.x = 0;
+                    simul_lip_info[lii][j].pos.y = 0;
+                    simul_lip_info[lii][j].trans = 256;
+                    
+                    SDL_SetSurfaceBlendMode(surface, SDL_BLENDMODE_NONE);
+                    //SDL_SetSurfaceBlendMode(surface, SDL_BLENDMODE_BLEND);
+
+                    //simul_lip_info[lii][j].fill(0,0,0,256);
+                    drawTaggedSurface(surface, &si, temp_rect);
+                    //SDL_SetSurfaceBlendMode(surface, SDL_BLENDMODE_ADD);
+                    //SDL_SetSurfaceBlendMode(surface, SDL_BLENDMODE_BLEND);
+                    drawTaggedSurface(surface, &simul_lip_info[lii][j], temp_rect);
+                    
+                    //si.pos.x = 0;
+                    //si.pos.y = 0;
+                    //drawTaggedSurface(surface, &si, temp_rect_tl);
+                    
+                    //Uint32* src_buffer = (Uint32*) si.image_surface->pixels;
+                    Uint32* dst_buffer = (Uint32*) surface->pixels;
+                    *dst_buffer = 0xff000000;
+
+                    //SDL_SetSurfaceBlendMode(surface, SDL_BLENDMODE_NONE);
+                    //simul_lip_info[lii][j].trans_mode = 2;
+                    //simul_lip_info[lii][j].deleteImage();
+                    //simul_lip_info[lii][j].allocImage(simul_lip_info[lii][0].pos.w, simul_lip_info[lii][0].pos.h);
+                    //simul_lip_info2[lii][j].trans_mode = 3;
+                    simul_lip_info2[lii][j].setupImage(surface, NULL, 0);
+                    
+                    simul_lip_info2[lii][j].pos.x = save_lx;
+                    simul_lip_info2[lii][j].pos.y = save_ly;
+                    simul_lip_info2[lii][j].trans = save_trans;
+
+                    simul_lip_info[lii][j].pos.x = save_lx;
+                    simul_lip_info[lii][j].pos.y = save_ly;
+                    simul_lip_info[lii][j].trans = save_trans;
+                }
+                si.pos.x = save_x;
+                si.pos.y = save_y;
+                si.trans = save_trans;
+                if (surface) SDL_FreeSurface(surface);
+            }*/
         }
     }
     
@@ -2219,6 +2353,12 @@ int PonscripterLabel::ldCommand(const pstring& cmd)
             }
             simul_lip_id[no] = set_id(tachi_info[no].file_name);
             if(simul_lip_id[no]){
+                if(simul_lip_id[no] == simul_voice_id){
+                    //simul_Channel[0].mode = 0;
+                    //lip_effpause_flag = 1;
+                    //simul_voice_sno = -1;
+                    //simul_voice_id = 0;
+                }
                 CBStringList fileparts;
                 char tempchar;
                 pstring buf2 = "";
@@ -2348,6 +2488,46 @@ int PonscripterLabel::simul_ch_witheffCommand(const pstring& cmd){
     simul_Channel[ch_no].visible_with_effect = temp_flag;
     return RET_CONTINUE;
 }
+int PonscripterLabel::simul_dlog_movCommand(const pstring& cmd){
+    int dst_no = script_h.readIntValue();
+    int src_no = script_h.readIntValue();
+    dwave_log_n[dst_no] = dwave_log_n[src_no];
+    //temp_dwave_log_n = 0;
+    for(int i=0; i<dwave_log_n[dst_no]; i++){
+        dwave_log[dst_no][i] = dwave_log[src_no][i];
+    }
+    return RET_CONTINUE;
+}
+/*int PonscripterLabel::simul_dlog_nextCommand(const pstring& cmd){
+    int ch_no = script_h.readIntValue();
+    if(dwave_log_n[ch_no] && dwave_log_p < dwave_log_n[ch_no])
+        playSound(dwave_log[ch_no][dwave_log_p++], SOUND_WAVE | SOUND_OGG, false, 0);
+    return RET_CONTINUE;
+}*/
+int PonscripterLabel::simul_dlog_playCommand(const pstring& cmd){
+    int ch_no = script_h.readIntValue();
+    dwave_log_p = 0;
+
+    /*if(dwave_log_n[ch_no] && dwave_log_p < dwave_log_n[ch_no])
+        playSound(dwave_log[ch_no][dwave_log_p++], SOUND_WAVE | SOUND_OGG, false, 0);*/
+    dwave_log_ch = ch_no;
+    dwave_log_on = 1;
+    dwave_log_play = 0;
+    return RET_CONTINUE;
+}
+int PonscripterLabel::simul_dlog_saveCommand(const pstring& cmd){
+    int ch_no = script_h.readIntValue();
+    dwave_log_n[ch_no] = temp_dwave_log_n;
+    //temp_dwave_log_n = 0;
+    for(int i=0; i<dwave_log_n[ch_no]; i++){
+        dwave_log[ch_no][i] = temp_dwave_log[i];
+    }
+    return RET_CONTINUE;
+}
+int PonscripterLabel::simul_dlog_stopCommand(const pstring& cmd){
+    dwave_log_on = 0;
+    return RET_CONTINUE;
+}
 int PonscripterLabel::simul_lipCommand(const pstring& cmd){
     int temp_flag = script_h.readIntValue();
     if(temp_flag == 0) simul_Channel[0].mode = 0;
@@ -2361,6 +2541,11 @@ int PonscripterLabel::simul_lipallCommand(const pstring& cmd){
     lipall_flag = temp_flag;
     return RET_CONTINUE;
 }
+int PonscripterLabel::simul_lipall_idCommand(const pstring& cmd){
+    int temp_flag = script_h.readIntValue();
+    lipall_flag = temp_flag;
+    return RET_CONTINUE;
+}
 int PonscripterLabel::simul_makerainCommand(const pstring& cmd){
     int ch_no = script_h.readIntValue();
     int ch_pr = script_h.readIntValue();
@@ -2369,11 +2554,13 @@ int PonscripterLabel::simul_makerainCommand(const pstring& cmd){
     int temp_rainWidth = script_h.readIntValue();
     int temp_rainMinLength = script_h.readIntValue();
     int temp_rainMaxLength = script_h.readIntValue();
+    int temp_rot = script_h.hasMoreArgs() ? script_h.readIntValue() : 0;
 
     simul_Channel[ch_no].mode = 10;
     simul_Channel[ch_no].pre_mode = 10;
     simul_Channel[ch_no].priority = ch_pr;
     simul_rainPeriod = temp_rainPeriod;
+    simul_rainstartTick = 0;
     rainpause_flag = 0;
     if(simul_rainPeriod==100000000){
         simul_rainPeriod = 100;
@@ -2383,7 +2570,96 @@ int PonscripterLabel::simul_makerainCommand(const pstring& cmd){
     drop_info.scale_x = temp_rainWidth;
     simul_rainMinLength = temp_rainMinLength;
     simul_rainMaxLength = temp_rainMaxLength;
+    drop_info.rot = temp_rot;
     rain_now = ch_no;
+    return RET_CONTINUE;
+}
+int PonscripterLabel::simul_makerain2Command(const pstring& cmd){
+    int ch_no = script_h.readIntValue();
+    int ch_pr = script_h.readIntValue();
+    int temp_rainPeriod = script_h.readIntValue();
+    int temp_rainNum = script_h.readIntValue();
+    int temp_rainWidth = script_h.readIntValue();
+    int temp_rainMinLength = script_h.readIntValue();
+    int temp_rainMaxLength = script_h.readIntValue();
+    int temp_rot = script_h.hasMoreArgs() ? script_h.readIntValue() : 0;
+
+    simul_Channel[ch_no].mode = 13;
+    simul_Channel[ch_no].pre_mode = 13;
+    simul_Channel[ch_no].priority = ch_pr;
+    simul_rainPeriod = temp_rainPeriod;
+    simul_rainstartTick = 0;
+    rainpause_flag = 0;
+    simul_rainNum = temp_rainNum;
+    simul_rainWidth = temp_rainWidth;
+    simul_rainMinLength = temp_rainMinLength;
+    simul_rainMaxLength = temp_rainMaxLength;
+    simul_rainRot = temp_rot;
+    rain_now = ch_no;
+    return RET_CONTINUE;
+}
+int PonscripterLabel::simul_makesnow1Command(const pstring& cmd){
+    int ch_no = script_h.readIntValue();
+    int ch_pr = script_h.readIntValue();
+    int temp_snowPeriod = script_h.readIntValue();
+    int temp_snowNum = script_h.readIntValue();
+    int temp_snowMinXSpeed = script_h.readIntValue();
+    int temp_snowMaxXSpeed = script_h.readIntValue();
+    int temp_snowMinYSpeed = script_h.readIntValue();
+    int temp_snowMaxYSpeed = script_h.readIntValue();
+
+    simul_Channel[ch_no].mode = 12;
+    simul_Channel[ch_no].pre_mode = 12;
+    simul_Channel[ch_no].priority = ch_pr;
+    simul_snowPeriod = temp_snowPeriod;
+    simul_snowNum[0] = temp_snowNum;
+
+    for(int i=0; i<temp_snowNum; i++){
+        simul_snow_state[0][i][0] = rand() % screen_width;
+        simul_snow_state[0][i][1] = 0 - (rand() % screen_height) - 50;
+        simul_snow_state[0][i][2] = temp_snowMinXSpeed;
+        if(temp_snowMinXSpeed < temp_snowMaxXSpeed)
+            simul_snow_state[0][i][2] += rand() % (1 + temp_snowMaxXSpeed - temp_snowMinXSpeed);
+        simul_snow_state[0][i][3] = temp_snowMinYSpeed;
+        if(temp_snowMinYSpeed < temp_snowMaxYSpeed)
+            simul_snow_state[0][i][3] += rand() % (1 + temp_snowMaxYSpeed - temp_snowMinYSpeed);
+    }
+    snow1_now = ch_no;
+    return RET_CONTINUE;
+}
+int PonscripterLabel::simul_makesnow2Command(const pstring& cmd){
+    int ch_no = script_h.readIntValue();
+    int ch_pr = script_h.readIntValue();
+    int temp_snowPeriod = script_h.readIntValue();
+    int temp_snowNum = script_h.readIntValue();
+    int temp_snowMinXSpeed = script_h.readIntValue();
+    int temp_snowMaxXSpeed = script_h.readIntValue();
+    int temp_snowMinYSpeed = script_h.readIntValue();
+    int temp_snowMaxYSpeed = script_h.readIntValue();
+
+    simul_Channel[ch_no].mode = 12;
+    simul_Channel[ch_no].pre_mode = 12;
+    simul_Channel[ch_no].priority = ch_pr;
+    simul_snowPeriod = temp_snowPeriod;
+    simul_snowNum[1] = temp_snowNum;
+
+    for(int i=0; i<temp_snowNum; i++){
+        simul_snow_state[1][i][0] = rand() % screen_width;
+        simul_snow_state[1][i][1] = 0 - (rand() % screen_height) - 50;
+        simul_snow_state[1][i][2] = temp_snowMinXSpeed;
+        if(temp_snowMinXSpeed < temp_snowMaxXSpeed)
+            simul_snow_state[1][i][2] += rand() % (1 + temp_snowMaxXSpeed - temp_snowMinXSpeed);
+        simul_snow_state[1][i][3] = temp_snowMinYSpeed;
+        if(temp_snowMinYSpeed < temp_snowMaxYSpeed)
+            simul_snow_state[1][i][3] += rand() % (1 + temp_snowMaxYSpeed - temp_snowMinYSpeed);
+    }
+    snow2_now = ch_no;
+    return RET_CONTINUE;
+}
+int PonscripterLabel::simul_multfontCommand(const pstring& cmd){
+    int temp_mult = script_h.readIntValue();
+    simul_font_mult = temp_mult;
+    sentence_font.set_size(simul_font_size*simul_font_mult/100);
     return RET_CONTINUE;
 }
 int PonscripterLabel::simul_nextldCommand(const pstring& cmd){
@@ -2411,6 +2687,8 @@ int PonscripterLabel::simul_offCommand(const pstring& cmd){
         }
     }
     if(ch_no == rain_now) rain_now = -1;
+    if(ch_no == snow1_now) snow1_now = -1;
+    if(ch_no == snow2_now) snow2_now = -1;
     if(ch_no == shake_now) shake_now = -1;
     if(ch_no == bg2_now) bg2_now = -1;
 
@@ -2437,9 +2715,18 @@ int PonscripterLabel::simul_offallCommand(const pstring& cmd){
             }
         }
     }
+    for (int i = 0; i < MAX_LIP_NUM; i++){
+        simul_lip_id[i] = 0;
+        simul_lip_sno[i] = -1;
+    }
     rain_now = -1;
+    snow1_now = -1;
+    snow2_now = -1;
     shake_now = -1;
     bg2_now = -1;
+
+    buttonsRemoveSprite(MAX_SPRITE_NUM-1);
+    sprite_info[MAX_SPRITE_NUM-1].remove();
 
     /*SDL_Rect temp_rect={0, 0, screen_width, screen_height};
     simul_checkFlushSub();
@@ -2454,6 +2741,16 @@ int PonscripterLabel::simul_playCommand(const pstring& cmd){
     simul_play(ch_no);
     return RET_CONTINUE;
 }
+int PonscripterLabel::simul_play_nowCommand(const pstring& cmd){
+    int ch_no = script_h.readIntValue();
+    script_h.readIntExpr().mutate(simul_Channel[ch_no].mode);
+    return RET_CONTINUE;
+}
+int PonscripterLabel::simul_rain_nowCommand(const pstring& cmd)
+{
+    script_h.readIntExpr().mutate(rain_now);
+    return RET_CONTINUE;
+}
 int PonscripterLabel::simul_setCommand(const pstring& cmd){
     pstring buf;
     int ch_no = script_h.readIntValue();
@@ -2463,6 +2760,8 @@ int PonscripterLabel::simul_setCommand(const pstring& cmd){
     int temp_interval = script_h.readIntValue();
     buf = script_h.readStrValue();
     int temp_num = script_h.readIntValue();
+    int temp_x = script_h.hasMoreArgs() ? script_h.readIntValue() : 0;
+    int temp_y = script_h.hasMoreArgs() ? script_h.readIntValue() : 0;
 
     CBStringList fileparts;
     pstring buf2 = "";
@@ -2496,8 +2795,8 @@ int PonscripterLabel::simul_setCommand(const pstring& cmd){
         simul_info[ii].setImageName(buf4);
         simul_info[ii].visible(true);
         simul_info[ii].trans = 256;
-        simul_info[ii].pos.x = 0;
-        simul_info[ii].pos.y = 0;
+        simul_info[ii].pos.x = temp_x;
+        simul_info[ii].pos.y = temp_y;
         parseTaggedString(&simul_info[ii]);
         if(temp_preload){
             setupAnimationInfo(&simul_info[ii]);
@@ -2522,6 +2821,8 @@ int PonscripterLabel::simul_setCommand(const pstring& cmd){
     simul_Channel[ch_no].fade_time = 0;
 
     if(ch_no == rain_now) rain_now = -1;
+    if(ch_no == snow1_now) snow1_now = -1;
+    if(ch_no == snow2_now) snow2_now = -1;
     if(ch_no == shake_now) shake_now = -1;
     if(ch_no == bg2_now) bg2_now = -1;
 
@@ -2535,6 +2836,8 @@ int PonscripterLabel::simul_set_manualCommand(const pstring& cmd){
     int temp_preload = script_h.readIntValue();
     buf = script_h.readStrValue();
     int temp_num = script_h.readIntValue();
+    int temp_x = script_h.hasMoreArgs() ? script_h.readIntValue() : 0;
+    int temp_y = script_h.hasMoreArgs() ? script_h.readIntValue() : 0;
 
     CBStringList fileparts;
     pstring buf2 = "";
@@ -2578,8 +2881,8 @@ int PonscripterLabel::simul_set_manualCommand(const pstring& cmd){
         simul_info[ii].setImageName(buf4);
         simul_info[ii].visible(true);
         simul_info[ii].trans = 256;
-        simul_info[ii].pos.x = 0;
-        simul_info[ii].pos.y = 0;
+        simul_info[ii].pos.x = temp_x;
+        simul_info[ii].pos.y = temp_y;
         parseTaggedString(&simul_info[ii]);
         if(temp_preload){
             setupAnimationInfo(&simul_info[ii]);
@@ -2606,6 +2909,8 @@ int PonscripterLabel::simul_set_manualCommand(const pstring& cmd){
     simul_Channel[ch_no].fade_time = 0;
 
     if(ch_no == rain_now) rain_now = -1;
+    if(ch_no == snow1_now) snow1_now = -1;
+    if(ch_no == snow2_now) snow2_now = -1;
     if(ch_no == shake_now) shake_now = -1;
     if(ch_no == bg2_now) bg2_now = -1;
 
@@ -2648,6 +2953,8 @@ int PonscripterLabel::simul_set_oneCommand(const pstring& cmd){
         simul_Channel[ch_no].fade_trans = temp_trans;
 
         if(ch_no == rain_now) rain_now = -1;
+        if(ch_no == snow1_now) snow1_now = -1;
+        if(ch_no == snow2_now) snow2_now = -1;
         if(ch_no == shake_now) shake_now = -1;
         if(ch_no == bg2_now) bg2_now = -1;
     }
@@ -2670,6 +2977,24 @@ int PonscripterLabel::simul_shakeCommand(const pstring& cmd){
 
     return RET_CONTINUE;
 }
+int PonscripterLabel::simul_shake_nowCommand(const pstring& cmd)
+{
+    script_h.readIntExpr().mutate(shake_now);
+    return RET_CONTINUE;
+}
+
+int PonscripterLabel::simul_snow1_nowCommand(const pstring& cmd)
+{
+    script_h.readIntExpr().mutate(snow1_now);
+    return RET_CONTINUE;
+}
+
+int PonscripterLabel::simul_snow2_nowCommand(const pstring& cmd)
+{
+    script_h.readIntExpr().mutate(snow2_now);
+    return RET_CONTINUE;
+}
+
 int PonscripterLabel::simul_sysoffCommand(const pstring& cmd){
     int ch_flag = script_h.readIntValue();
     if(ch_flag) pause_flag = false;
@@ -3336,6 +3661,10 @@ int PonscripterLabel::dwaveCommand(const pstring& cmd)
     }
 
     int ch = script_h.readIntValue();
+    Uint32 now = SDL_GetTicks();
+    dwave_test_flag=0;
+    dwave_test_st = now+100;
+    dwave_test_ed = now+300;
     if (ch < 0) ch = 0;
     else if (ch >= ONS_MIX_CHANNELS) ch = ONS_MIX_CHANNELS - 1;
 
@@ -3344,8 +3673,15 @@ int PonscripterLabel::dwaveCommand(const pstring& cmd)
     }
     else {
         int fmt = SOUND_WAVE | SOUND_OGG;
+        pstring buf = script_h.readStrValue();
         if (play_mode == WAVE_PRELOAD) fmt |= SOUND_PRELOAD;
-        playSound(script_h.readStrValue(), fmt, loop_flag, ch);
+        if(ch == 0 && temp_dwave_log_n < DWAVE_LOG_LEN){
+            dwave_test_flag=1;
+            dwave_test_play=1;
+            dwave_test_log = buf;
+            temp_dwave_log[temp_dwave_log_n++] = buf;
+        }
+        playSound(buf, fmt, loop_flag, ch);
     }
 
     return RET_CONTINUE;
@@ -3564,6 +3900,7 @@ int PonscripterLabel::cspCommand(const pstring& cmd)
     
     if (no1 == -1){
         for (int i = 0; i < max; i++) {
+            if(!csp2 && i==MAX_SPRITE_NUM-1) continue;
             if (si[i].showing())
                 dirty_rect.add(csp2 ? si[i].bounding_rect : si[i].pos);
 
@@ -3574,8 +3911,11 @@ int PonscripterLabel::cspCommand(const pstring& cmd)
 
             if (!csp2) buttonsRemoveSprite(i);
             si[i].remove();
+            if(csp2) simul_lip_lii2[i]=-1;
+            else simul_lip_lii[i]=-1;
         }
         for(int lii=3; lii<MAX_LIP_NUM; lii++){
+            simul_hole_info[lii].remove();
             if(simul_voice_id == simul_lip_id[lii]) simul_Channel[0].mode = 0;
             simul_lip_id[lii] = 0;
             simul_lip_sno[lii] = -1;
@@ -3588,6 +3928,8 @@ int PonscripterLabel::cspCommand(const pstring& cmd)
 
             if (!csp2) buttonsRemoveSprite(no);
             si[no].remove();
+            if(csp2) simul_lip_lii2[no]=-1;
+            else simul_lip_lii[no]=-1;
         }
         if(csp2){
             no1 += 10000;
@@ -3595,6 +3937,7 @@ int PonscripterLabel::cspCommand(const pstring& cmd)
         }
         for(int lii=3; lii<MAX_LIP_NUM; lii++){
             if(simul_lip_sno[lii] >= no1 && simul_lip_sno[lii] <= no2){
+                simul_hole_info[lii].remove();
                 if(simul_voice_id == simul_lip_id[lii]) simul_Channel[0].mode = 0;
                 simul_lip_id[lii] = 0;
                 simul_lip_sno[lii] = -1;
@@ -4297,7 +4640,7 @@ int PonscripterLabel::bgCommand(const pstring& cmd)
         int i;
         for (i = 0; i < 3; i++)
             tachi_info[i].remove();
-        for (i = 0; i < MAX_LIP_NUM; i++){
+        for (i = 0; i < 3; i++){//MAX_LIP_NUM; i++){
             simul_lip_id[i] = 0;
             simul_lip_sno[i] = -1;
         }

@@ -1435,6 +1435,8 @@ int PonscripterLabel::eventLoop()
             break;
 
         case ONS_WAVE_EVENT:
+            dwave_log_play=0;
+            dwave_test_play=0;
             flushEventSub(event);
             //printf("ONS_WAVE_EVENT %d: %x %d %x\n", event.user.code, wave_sample[0], automode_flag, event_mode);
             if (event.user.code != 0

@@ -513,13 +513,36 @@ PonscripterLabel::simul_checkFlushSub(){
                 }
                 continue;
             }
+            else if(simul_Channel[i].mode == 13){
+                if(now >= simul_rainstartTick + simul_rainPeriod){
+                    simul_rainstartTick = now;
+                    Uint32 after_rain = SDL_GetTicks();
+                    if(after_rain - now + 5 > simul_rainPeriod)
+                        simul_rainPeriod += 16; //prevent lag
+                    dirty_rect.fill(screen_width, screen_height);
+                    check_flag = true;
+                }
+                continue;
+            }
+            else if(simul_Channel[i].mode == 12){
+                if(now >= simul_snowstartTick + simul_snowPeriod){
+                    simul_snowstartTick = now;
+                    simul_progSnow();
+                    Uint32 after_snow = SDL_GetTicks();
+                    if(after_snow - now + 5 > simul_snowPeriod)
+                        simul_snowPeriod += 16; //prevent lag
+                    dirty_rect.fill(screen_width, screen_height);
+                    check_flag = true;
+                }
+                continue;
+            }
             else if(simul_Channel[i].mode == 11){
                 if(now >= simul_shakestartTick + simul_shakePeriod){
                     simul_shakemode = true;
                     simul_shakestartTick = now;
                     double tempx, tempy;
-                    tempx = 10 * SDL_sin(2*M_PI*((double) now)/((double) simul_shakePx));
-                    tempy = 40 + 40 * SDL_cos(2*M_PI*((double) now)/((double) simul_shakePy));
+                    tempx = 5 * SDL_sin(2*M_PI*((double) now)/((double) simul_shakePx));
+                    tempy = 10 + 10 * SDL_cos(2*M_PI*((double) now)/((double) simul_shakePy));
                     simul_shakex = (int) tempx;
                     simul_shakey = (int) tempy;
                     dirty_rect.fill(screen_width, screen_height);
@@ -545,7 +568,7 @@ PonscripterLabel::simul_checkFlushSub(){
                     simul_info[simul_Channel[i].infoIndex[0]].trans = simul_Channel[i].fade_trans;
                 }
             }
-            while(now >= simul_Channel[i].timestamp[1+simul_Channel[i].current]){
+            while(now >= simul_Channel[i].timestamp[1+(simul_Channel[i].current)]){
                 channel_flag = true;
                 if(simul_Channel[i].current != -1){
                     temp_infoIndex = simul_Channel[i].infoIndex[simul_Channel[i].current];
@@ -553,7 +576,7 @@ PonscripterLabel::simul_checkFlushSub(){
                         channel_flag = false;
                         simul_Channel[i].mode = 0;
                         int ii;
-                        for(j=0; j<simul_Channel[i].stampNum; j++){
+                        for(j=0; j<simul_Channel[i].stampNum-1; j++){
                             ii = simul_Channel[i].infoIndex[j];
                             if(ii >=0 && ii < MAX_SIMUL_NUM){
                                 simul_info[ii].remove();
@@ -566,6 +589,7 @@ PonscripterLabel::simul_checkFlushSub(){
                     }
                     else{
                         temp_infoIndex -= MAX_SIMUL_NUM;
+                        if(lipall_flag) dirty_rect.fill(screen_width, screen_height);
                         if(simul_lip_info[temp_infoIndex/3][temp_infoIndex%3].affine_flag)
                             dirty_rect.add(simul_lip_info[temp_infoIndex/3][temp_infoIndex%3].bounding_rect);
                         else
@@ -576,18 +600,24 @@ PonscripterLabel::simul_checkFlushSub(){
                 if(simul_Channel[i].current == simul_Channel[i].stampNum - 1){
                     if(simul_Channel[i].mode == 2){
                         simul_Channel[i].current = -1;
-                        simul_Channel[i].need_load = false;
-                        temp_period = simul_Channel[i].timestamp[simul_Channel[i].stampNum - 1] - simul_Channel[i].startTick;
+                        //simul_Channel[i].need_load = false;
+                        //temp_period = simul_Channel[i].timestamp[simul_Channel[i].stampNum - 1] - simul_Channel[i].startTick;
                         for(j=0; j<simul_Channel[i].stampNum; j++){
-                            simul_Channel[i].timestamp[j] += temp_period;
+                            //simul_Channel[i].timestamp[j] += temp_period;
+                            simul_Channel[i].timestamp[j] = simul_Channel[i].timestamp[j] - simul_Channel[i].startTick + now;
                         }
+                        simul_Channel[i].startTick = now;
                         continue;
                     }
                     channel_flag = false;
                     check_flag = true;
                     simul_Channel[i].mode = 0;
+                    if(i==0){
+                        simul_voice_sno = -1;
+                        simul_voice_id = 0;
+                    }
                     int ii;
-                    for(j=0; j<simul_Channel[i].stampNum; j++){
+                    for(j=0; j<simul_Channel[i].stampNum-1; j++){
                         ii = simul_Channel[i].infoIndex[j];
                         if(ii >=0 && ii < MAX_SIMUL_NUM){
                             simul_info[ii].remove();
@@ -595,20 +625,24 @@ PonscripterLabel::simul_checkFlushSub(){
                     }
                     break;
                 }
-                if(simul_Channel[i].need_load){
-                    temp_infoIndex = simul_Channel[i].infoIndex[simul_Channel[i].current];
-                    if(temp_infoIndex < MAX_SIMUL_NUM)
-                        setupAnimationInfo(&simul_info[temp_infoIndex]);
-                }
             }
+            
+            
             if(channel_flag){
                 check_flag = true;
                 if(simul_Channel[i].current != -1){
                     temp_infoIndex = simul_Channel[i].infoIndex[simul_Channel[i].current];
-                    if(temp_infoIndex < 0 || temp_infoIndex >= MAX_SIMUL_NUM + MAX_LIP_NUM*3){
+                    if(temp_infoIndex < 0 || temp_infoIndex >= MAX_SIMUL_NUM + MAX_LIP_NUM*3)
                         continue;
+                    
+                    if(simul_Channel[i].need_load){
+                        if(simul_Channel[i].current < simul_Channel[i].stampNum-1){
+                            if(temp_infoIndex < MAX_SIMUL_NUM && !simul_info[temp_infoIndex].image_surface)
+                                setupAnimationInfo(&simul_info[temp_infoIndex]);
+                        }
                     }
-                    else if(temp_infoIndex < MAX_SIMUL_NUM){
+
+                    if(temp_infoIndex < MAX_SIMUL_NUM){
                         if(simul_info[temp_infoIndex].affine_flag)
                             dirty_rect.add(simul_info[temp_infoIndex].bounding_rect);
                         else
@@ -616,6 +650,7 @@ PonscripterLabel::simul_checkFlushSub(){
                     }
                     else{
                         temp_infoIndex -= MAX_SIMUL_NUM;
+                        if(lipall_flag) dirty_rect.fill(screen_width, screen_height);
                         if(simul_lip_info[temp_infoIndex/3][temp_infoIndex%3].affine_flag)
                             dirty_rect.add(simul_lip_info[temp_infoIndex/3][temp_infoIndex%3].bounding_rect);
                         else
@@ -631,6 +666,63 @@ PonscripterLabel::simul_checkFlushSub(){
 void
 PonscripterLabel::simul_checkFlush()
 {
+    if(dwave_log_on && !dwave_log_play){
+        if(dwave_log_p >= dwave_log_n[dwave_log_ch]){
+            dwave_log_on = 0;
+        }
+        else{
+            dwave_log_play = 1;
+            next_voice = 999;
+            playSound(dwave_log[dwave_log_ch][dwave_log_p++], SOUND_WAVE | SOUND_OGG, false, 0);
+            next_voice = 0;
+        }
+    }
+    if(!(pause_flag || skip_flag || ctrl_pressed_status || skip_to_wait)){
+        /*if(dwave_test_flag==2 && !dwave_test_play){
+            Uint32 now = SDL_GetTicks();
+            dwave_test_flag=3;
+            if(dwave_test_st+600 < now && now < dwave_test_ed+600){
+                dwave_test_flag=4;
+                dwave_test_play=1;
+                playSound(dwave_test_log, SOUND_WAVE | SOUND_OGG, false, 0);
+
+                if(simul_Channel[8].mode != 11) simul_Channel[8].mode = 11;
+                else simul_Channel[8].mode = 0;
+                simul_Channel[8].pre_mode = 11;
+                
+                simul_shakePeriod = 15;
+                simul_shakePx = 600;
+                simul_shakePy = 900;
+            }
+        }*/
+        if(dwave_test_flag==2){
+            Uint32 now = SDL_GetTicks();
+            //dwave_test_flag=3;
+            if(dwave_test_st < now && now < dwave_test_ed){
+                if (Mix_Playing(0) == 0){
+                    dwave_test_flag=4;
+                    dwave_test_play=1;
+                    playSound(dwave_test_log, SOUND_WAVE | SOUND_OGG, false, 0);
+    
+                    /*
+                    if(simul_Channel[8].mode != 11){
+                        simul_Channel[8].mode = 11;
+                        simul_Channel[8].pre_mode = 11;
+                    }
+                    else{
+                        simul_Channel[8].mode = 0;
+                        simul_Channel[8].pre_mode = 0;
+                    }
+                    
+                    simul_shakePeriod = 15;
+                    simul_shakePx = 600;
+                    simul_shakePy = 900;
+                    */
+                }
+            }
+        }
+    }
+
     if(pause_flag) return;
     bool check_flag;
     check_flag = simul_checkFlushSub();
@@ -638,6 +730,8 @@ PonscripterLabel::simul_checkFlush()
         if(check_flag){
             if(skip_flag || ctrl_pressed_status || skip_to_wait){
                 simul_Channel[0].mode = 0;
+                simul_voice_sno = -1;
+                simul_voice_id = 0;
                 return;
             }
             from_simul = true;
@@ -674,6 +768,56 @@ PonscripterLabel::simul_drawRain()
     }
 }
 
+void
+PonscripterLabel::simul_progSnow()
+{
+    for(int i=0; i<2; i++){
+        for(int j=0; j<simul_snowNum[i]; j++){
+            simul_snow_state[i][j][0] = simul_snow_state[i][j][0] + simul_snow_state[i][j][2];
+            if(simul_snow_state[i][j][0] >= screen_width)
+                simul_snow_state[i][j][0] -= screen_width + 100;
+            simul_snow_state[i][j][1] = simul_snow_state[i][j][1] + simul_snow_state[i][j][3];
+            if(simul_snow_state[i][j][1] >= screen_height)
+                simul_snow_state[i][j][1] -= screen_height + 100;
+        }
+    }
+}
+
+/*void
+PonscripterLabel::simul_drawSnow(int funcid)
+{
+    SDL_FillRect(simul_snow_surface1, NULL, SDL_MapRGBA(simul_snow_surface1->format, 0, 0, 0, 0));
+    SDL_FillRect(simul_snow_surface2, NULL, SDL_MapRGBA(simul_snow_surface2->format, 0, 0, 0, 0));
+    
+    SDL_Rect temp_rect={0, 0, screen_width, screen_height};
+    for(int i=0; i<simul_snowNum1; i++){
+        simul_snow_state1[i][0] = simul_snow_state1[i][0] + simul_snow_state1[i][2];
+        if(simul_snow_state1[i][0] >= screen_width)
+            simul_snow_state1[i][0] -= screen_width + 100;
+        simul_snow_state1[i][1] = simul_snow_state1[i][1] + simul_snow_state1[i][3];
+        if(simul_snow_state1[i][1] >= screen_height)
+            simul_snow_state1[i][1] -= screen_height + 100;
+
+        snow1_info.pos.x = simul_snow_state1[i][0];
+        snow1_info.pos.y = simul_snow_state1[i][1];
+        snow1_info.pos.x = 200;
+        snow1_info.pos.y = 200;
+        drawTaggedSurface(simul_snow_surface1, &snow1_info, temp_rect);
+    }
+    for(int i=0; i<simul_snowNum2; i++){
+        simul_snow_state2[i][0] = simul_snow_state2[i][0] + simul_snow_state2[i][2];
+        if(simul_snow_state2[i][0] >= screen_width)
+            simul_snow_state2[i][0] -= screen_width + 100;
+        simul_snow_state2[i][1] = simul_snow_state2[i][1] + simul_snow_state2[i][3];
+        if(simul_snow_state2[i][1] >= screen_height)
+            simul_snow_state2[i][1] -= screen_height + 100;
+
+        snow2_info.pos.x = simul_snow_state2[i][0];
+        snow2_info.pos.y = simul_snow_state2[i][1];
+        drawTaggedSurface(simul_snow_surface2, &snow2_info, temp_rect);
+    }
+}*/
+
 
 void
 PonscripterLabel::drawTaggedSurface2(SDL_Surface* dst_surface, AnimationInfo* anim, SDL_Rect &clip){
@@ -691,26 +835,84 @@ PonscripterLabel::drawTaggedSurface2(SDL_Surface* dst_surface, AnimationInfo* an
 }
 
 void
-PonscripterLabel::simul_refreshSub(SDL_Surface* surface, SDL_Rect &clip, int priority)
+PonscripterLabel::simul_refreshSub(SDL_Surface* surface, SDL_Rect &clip, int priority, int refresh_mode)
 {
     if(pause_flag || skip_flag || ctrl_pressed_status || skip_to_wait){
         simul_Channel[0].mode = 0;
+        simul_voice_sno = -1;
+        simul_voice_id = 0;
         return;
     }
     //if(setEffect_flag) return;
     int temp_infoIndex;
     for(int i=0; i<MAX_CHANNEL_NUM; i++){
         if(simul_Channel[i].mode && (simul_Channel[i].priority == priority || (doing_effect && priority == -1 && simul_Channel[i].visible_with_effect))){
+            
+            if(setEffect_flag && simul_Channel[i].visible_with_effect)
+                continue;
+
+            if(surface == effect_dst_surface && simul_Channel[i].visible_with_effect)
+                continue;
+            
             if(simul_Channel[i].mode == 10){
                 SDL_BlitSurface( simul_rain_surface, &clip, surface, &clip );
+                continue;
+            }
+            else if(simul_Channel[i].mode == 13){
+                int max_length = (screen_height * simul_rainMaxLength) / 100;
+                int j, ai, aj, jst, jed;
+                int sc_ar[7]={5, 7, 10, 15, 20, 25, 30};
+                if(simul_rainWidth<=70) ai=0;
+                else if(simul_rainWidth>=200) ai=2;
+                else ai=1;
+                if(simul_rainRot>4) ai=3;
+
+                jst=6;
+                for(j=0; j<7; j++){
+                    if(simul_rainMinLength <= sc_ar[j]){
+                        jst=j;
+                        break;
+                    }
+                }
+
+                jed=0;
+                for(j=6; j>=0; j--){
+                    if(simul_rainMaxLength >= sc_ar[j]){
+                        jed=j;
+                        break;
+                    }
+                }
+
+                if(jst>jed){
+                    jst=3;
+                    jed=3;
+                }
+
+                for(j=0; j<simul_rainNum; j++){
+                    aj = jst + (j % (jed-jst+1));
+                    drop_info2[ai][aj].pos.x = rand() % screen_width;
+                    drop_info2[ai][aj].pos.y = (rand() % (screen_height + max_length)) - max_length;
+                    drawTaggedSurface(surface, &drop_info2[ai][aj], clip);
+                }
+                continue;
+            }
+            else if(simul_Channel[i].mode == 12){
+                int fid;
+                if(i == snow1_now) fid = 0;
+                else if(i == snow2_now) fid = 1;
+                else continue;
+                for(int j=0; j<simul_snowNum[fid]; j++){
+                    snow_info[fid].pos.x = simul_snow_state[fid][j][0];
+                    snow_info[fid].pos.y = simul_snow_state[fid][j][1];
+                    drawTaggedSurface(surface, &snow_info[fid], clip);
+                }
                 continue;
             }
             if(simul_Channel[i].mode > 2 || simul_Channel[i].mode <= 0)
                 continue;
             if(simul_Channel[i].current == -1)
                 continue;
-            if(setEffect_flag && simul_Channel[i].visible_with_effect)
-                continue;
+
             temp_infoIndex = simul_Channel[i].infoIndex[simul_Channel[i].current];
             if(temp_infoIndex < 0)
                 continue;
@@ -722,34 +924,13 @@ PonscripterLabel::simul_refreshSub(SDL_Surface* surface, SDL_Rect &clip, int pri
                         drawTaggedSurface2(surface, &simul_info[temp_infoIndex], clip);
                 }
             }
-            else{
-                temp_infoIndex -= MAX_SIMUL_NUM;
-                if(temp_infoIndex >= MAX_LIP_NUM*3)
-                    continue;
-                if (simul_lip_info[temp_infoIndex/3][temp_infoIndex%3].image_surface && simul_lip_info[temp_infoIndex/3][temp_infoIndex%3].showing()){
-                    if(priority < 3)
-                        drawTaggedSurface(surface, &simul_lip_info[temp_infoIndex/3][temp_infoIndex%3], clip);
-                    else
-                        drawTaggedSurface2(surface, &simul_lip_info[temp_infoIndex/3][temp_infoIndex%3], clip);
-                }
-            }
         }
     }
-    if(lipall_flag && priority==3){
-        if(simul_Channel[0].mode){
-            temp_infoIndex = simul_Channel[0].infoIndex[simul_Channel[0].current];
-            temp_infoIndex -= MAX_SIMUL_NUM;
-            if(temp_infoIndex >= MAX_LIP_NUM*3) return;
-            for(int lii = 0; lii<MAX_LIP_NUM; lii++){
-                if(lii == temp_infoIndex/3) continue;
-                if(simul_lip_id[lii] == simul_lip_id[temp_infoIndex/3]){
-                    if (simul_lip_info[lii][temp_infoIndex%3].image_surface && simul_lip_info[lii][temp_infoIndex%3].showing()){
-                        drawTaggedSurface2(surface, &simul_lip_info[lii][temp_infoIndex%3], clip);
-                    }
-                }
-            }
-        }
-    }
+
+    /*if(priority == -1 && setEffect_flag){
+        refreshSurface2eff(surface, &clip,
+            refresh_mode);
+    }*/
 }
 
 void
@@ -784,6 +965,11 @@ PonscripterLabel::refreshSurface(SDL_Surface* surface, SDL_Rect* clip_src,
 
     simul_refreshSub(surface, clip, 8);
 
+    int temp_infoIndex;
+    temp_infoIndex = simul_Channel[0].infoIndex[simul_Channel[0].current];
+    temp_infoIndex -= MAX_SIMUL_NUM;
+    int temp_lip_flag;
+
     if (!all_sprite_hide_flag) {
         if (z_order < 10 && refresh_mode & REFRESH_SAYA_MODE)
             top = 9;
@@ -791,14 +977,30 @@ PonscripterLabel::refreshSurface(SDL_Surface* surface, SDL_Rect* clip_src,
             top = z_order;
     
         for (i = MAX_SPRITE_NUM - 1; i > top; --i) {
-            if(i==601) continue;
-            if(i==602) continue;
             if (sprite_info[i].image_surface && sprite_info[i].showing()){
-                if(604<=i && i<=607)
-                    drawTaggedSurface(surface, &sprite_info[i], clip);
+                if(601<=i && i<=607)
+                    continue;
+                
+                if(sprite_info[i].pos.x>=screen_width || sprite_info[i].pos.y>=screen_height)
+                    continue;
+
+                temp_lip_flag = 0;
+                if(simul_Channel[0].mode && !doing_effect && temp_infoIndex >= 0 && temp_infoIndex < MAX_LIP_NUM*3 && simul_lip_lii[i] >= 0 && simul_lip_lii[i] < MAX_LIP_NUM){
+                    if((!lipall_flag && i == simul_voice_sno) || (lipall_flag == 1 && simul_lip_id[simul_lip_lii[i]] == simul_voice_id) || (lipall_flag == 2)){
+                        if(simul_lip_id[simul_lip_lii[i]] && simul_lip_info[simul_lip_lii[i]][0].image_surface && simul_lip_info[simul_lip_lii[i]][0].showing()){
+                            temp_lip_flag = 1;
+                        }
+                    }
+                }
+
+                if(temp_lip_flag && simul_lip_info[simul_lip_lii[i]][0].trans < 250 && simul_hole_info[simul_lip_lii[i]].image_surface)
+                    drawTaggedSurface2(surface, &simul_hole_info[simul_lip_lii[i]], clip);
                 else
                     drawTaggedSurface2(surface, &sprite_info[i], clip);
-                if(i == simul_voice_sno) simul_refreshSub(surface, clip, 11);
+
+                if(temp_lip_flag){
+                    drawTaggedSurface2(surface, &simul_lip_info[simul_lip_lii[i]][temp_infoIndex%3], clip);
+                }
             }
         }
     }
@@ -807,8 +1009,17 @@ PonscripterLabel::refreshSurface(SDL_Surface* surface, SDL_Rect* clip_src,
 
     for (i = 0; i < 3; ++i) {
         if (human_order[2 - i] >= 0 &&
-            tachi_info[human_order[2 - i]].image_surface)
+            tachi_info[human_order[2 - i]].image_surface){
             drawTaggedSurface2(surface, &tachi_info[human_order[2 - i]], clip);
+
+            if(simul_Channel[0].mode && !doing_effect && temp_infoIndex >= 0 && temp_infoIndex < MAX_LIP_NUM*3){
+                if((!lipall_flag && human_order[2 - i] == temp_infoIndex/3) || (lipall_flag == 1 && simul_lip_id[human_order[2 - i]] == simul_voice_id) || (lipall_flag == 2)){
+                    if(simul_lip_id[human_order[2 - i]] && simul_lip_info[human_order[2 - i]][0].image_surface && simul_lip_info[human_order[2 - i]][0].showing()){
+                        drawTaggedSurface2(surface, &simul_lip_info[human_order[2 - i]][temp_infoIndex%3], clip);
+                    }
+                }
+            }
+        }
     }
 
     simul_refreshSub(surface, clip, 6);
@@ -821,8 +1032,23 @@ PonscripterLabel::refreshSurface(SDL_Surface* surface, SDL_Rect* clip_src,
         if (!all_sprite2_hide_flag) {
             for (i = MAX_SPRITE2_NUM - 1; i >= 0; --i) {
                 if (sprite2_info[i].image_surface && sprite2_info[i].showing()){
-                    drawTaggedSurface2(surface, &sprite2_info[i], clip);
-                    if(i == simul_voice_sno-10000) simul_refreshSub(surface, clip, 11);
+                    temp_lip_flag = 0;
+                    if(simul_Channel[0].mode && !doing_effect && temp_infoIndex >= 0 && temp_infoIndex < MAX_LIP_NUM*3 && simul_lip_lii2[i] >= 0 && simul_lip_lii2[i] < MAX_LIP_NUM){
+                        if((!lipall_flag && i == simul_voice_sno-10000) || (lipall_flag == 1 && simul_lip_id[simul_lip_lii2[i]] == simul_voice_id) || (lipall_flag == 2)){
+                            if(simul_lip_id[simul_lip_lii2[i]] && simul_lip_info[simul_lip_lii2[i]][0].image_surface && simul_lip_info[simul_lip_lii2[i]][0].showing()){
+                                temp_lip_flag = 1;
+                            }
+                        }
+                    }
+
+                    if(temp_lip_flag && simul_lip_info[simul_lip_lii2[i]][0].trans < 250 && simul_hole_info[simul_lip_lii2[i]].image_surface)
+                        drawTaggedSurface2(surface, &simul_hole_info[simul_lip_lii2[i]], clip);
+                    else
+                        drawTaggedSurface2(surface, &sprite2_info[i], clip);
+                    
+                    if(temp_lip_flag){
+                        drawTaggedSurface2(surface, &simul_lip_info[simul_lip_lii2[i]][temp_infoIndex%3], clip);
+                    }
                 }
             }
         }
@@ -841,14 +1067,30 @@ PonscripterLabel::refreshSurface(SDL_Surface* surface, SDL_Rect* clip_src,
         else
             top = 0;
         for (i = z_order; i >= top; --i) {
-            if(i==601) continue;
-            if(i==602) continue;
             if (sprite_info[i].image_surface && sprite_info[i].showing()){
-                if(604<=i && i<=607)
-                    drawTaggedSurface(surface, &sprite_info[i], clip);
+                if(601<=i && i<=607)
+                    continue;
+
+                if(sprite_info[i].pos.x>=screen_width || sprite_info[i].pos.y>=screen_height)
+                    continue;
+
+                temp_lip_flag = 0;
+                if(simul_Channel[0].mode && !doing_effect && temp_infoIndex >= 0 && temp_infoIndex < MAX_LIP_NUM*3 && simul_lip_lii[i] >= 0 && simul_lip_lii[i] < MAX_LIP_NUM){
+                    if((!lipall_flag && i == simul_voice_sno) || (lipall_flag == 1 && simul_lip_id[simul_lip_lii[i]] == simul_voice_id) || (lipall_flag == 2)){
+                        if(simul_lip_id[simul_lip_lii[i]] && simul_lip_info[simul_lip_lii[i]][0].image_surface && simul_lip_info[simul_lip_lii[i]][0].showing()){
+                            temp_lip_flag = 1;
+                        }
+                    }
+                }
+
+                if(temp_lip_flag && simul_lip_info[simul_lip_lii[i]][0].trans < 250 && simul_hole_info[simul_lip_lii[i]].image_surface)
+                    drawTaggedSurface2(surface, &simul_hole_info[simul_lip_lii[i]], clip);
                 else
                     drawTaggedSurface2(surface, &sprite_info[i], clip);
-                if(i == simul_voice_sno) simul_refreshSub(surface, clip, 11);
+
+                if(temp_lip_flag){
+                    drawTaggedSurface2(surface, &simul_lip_info[simul_lip_lii[i]][temp_infoIndex%3], clip);
+                }
             }
         }
     }
@@ -860,8 +1102,23 @@ PonscripterLabel::refreshSurface(SDL_Surface* surface, SDL_Rect* clip_src,
         if (!all_sprite2_hide_flag) {
             for (i = MAX_SPRITE2_NUM - 1; i >= 0; --i) {
                 if (sprite2_info[i].image_surface && sprite2_info[i].showing()){
-                    drawTaggedSurface2(surface, &sprite2_info[i], clip);
-                    if(i == simul_voice_sno-10000) simul_refreshSub(surface, clip, 11);
+                    temp_lip_flag = 0;
+                    if(simul_Channel[0].mode && !doing_effect && temp_infoIndex >= 0 && temp_infoIndex < MAX_LIP_NUM*3 && simul_lip_lii2[i] >= 0 && simul_lip_lii2[i] < MAX_LIP_NUM){
+                        if((!lipall_flag && i == simul_voice_sno-10000) || (lipall_flag == 1 && simul_lip_id[simul_lip_lii2[i]] == simul_voice_id) || (lipall_flag == 2)){
+                            if(simul_lip_id[simul_lip_lii2[i]] && simul_lip_info[simul_lip_lii2[i]][0].image_surface && simul_lip_info[simul_lip_lii2[i]][0].showing()){
+                                temp_lip_flag = 1;
+                            }
+                        }
+                    }
+
+                    if(temp_lip_flag && simul_lip_info[simul_lip_lii2[i]][0].trans < 250 && simul_hole_info[simul_lip_lii2[i]].image_surface)
+                        drawTaggedSurface2(surface, &simul_hole_info[simul_lip_lii2[i]], clip);
+                    else
+                        drawTaggedSurface2(surface, &sprite2_info[i], clip);
+                    
+                    if(temp_lip_flag){
+                        drawTaggedSurface2(surface, &simul_lip_info[simul_lip_lii2[i]][temp_infoIndex%3], clip);
+                    }
                 }
             }
         }
@@ -871,7 +1128,7 @@ PonscripterLabel::refreshSurface(SDL_Surface* surface, SDL_Rect* clip_src,
     }
     
     simul_refreshSub(surface, clip, 3);
-
+//if(!setEffect_flag){
     if (!(refresh_mode & REFRESH_SAYA_MODE)) {
         for (i = 0; i < MAX_PARAM_NUM; ++i)
             if (bar_info[i])
@@ -895,21 +1152,19 @@ PonscripterLabel::refreshSurface(SDL_Surface* surface, SDL_Rect* clip_src,
             drawTaggedSurface(surface, &cursor_info[CURSOR_NEWPAGE_NO], clip);
     }
 
-    i=601; //force cursor TextCC1SpNum 601 TextCC2SpNum 602
-    if (sprite_info[i].image_surface && sprite_info[i].showing())
-        drawTaggedSurface(surface, &sprite_info[i], clip);
-    i=602;
-    if (sprite_info[i].image_surface && sprite_info[i].showing())
-        drawTaggedSurface(surface, &sprite_info[i], clip);
-
+    for(i=607; i>=601; i--){ //force cursor TextCC1SpNum 601 TextCC2SpNum 602
+        if (sprite_info[i].image_surface && sprite_info[i].showing())
+            drawTaggedSurface(surface, &sprite_info[i], clip);
+    }
+//}
     simul_refreshSub(surface, clip, 2);
-
+//if(!setEffect_flag){
     for (ButtonElt::iterator it = buttons.begin(); it != buttons.end(); ++it)
         if (it->second.show_flag > 0)
             drawTaggedSurface(surface, it->second.anim[it->second.show_flag - 1], clip);
-
+//}
     simul_refreshSub(surface, clip, 1);
-    simul_refreshSub(surface, clip, -1);
+    simul_refreshSub(surface, clip, -1, refresh_mode);
 
 
     clip = {screen_width - 90, 20, 90, 100};
@@ -924,6 +1179,43 @@ PonscripterLabel::refreshSurface(SDL_Surface* surface, SDL_Rect* clip_src,
     }
 }
 
+void
+PonscripterLabel::refreshSurface2eff(SDL_Surface* surface, SDL_Rect* clip_src,
+				 int refresh_mode)
+{
+    int i;
+    SDL_Rect clip = { 0, 0, surface->w, surface->h };
+    if (!(refresh_mode & REFRESH_SAYA_MODE)) {
+        for (i = 0; i < MAX_PARAM_NUM; ++i)
+            if (bar_info[i])
+                drawTaggedSurface(surface, bar_info[i], clip);
+        for (i = 0; i < MAX_PARAM_NUM; ++i)
+            if (prnum_info[i])
+                drawTaggedSurface(surface, prnum_info[i], clip);
+    }
+
+    if (!windowback_flag) {
+        if (refresh_mode & REFRESH_SHADOW_MODE)
+            shadowTextDisplay(surface, clip);
+        if (refresh_mode & REFRESH_TEXT_MODE)
+            text_info.blendOnSurface(surface, 0, 0, clip);
+    }
+
+    if (refresh_mode & REFRESH_CURSOR_MODE && !textgosub_label) {
+        if (clickstr_state == CLICK_WAIT)
+            drawTaggedSurface(surface, &cursor_info[CURSOR_WAIT_NO], clip);
+        else if (clickstr_state == CLICK_NEWPAGE)
+            drawTaggedSurface(surface, &cursor_info[CURSOR_NEWPAGE_NO], clip);
+    }
+
+    for(i=607; i>=601; i--){ //force cursor TextCC1SpNum 601 TextCC2SpNum 602
+        if (sprite_info[i].image_surface && sprite_info[i].showing())
+            drawTaggedSurface(surface, &sprite_info[i], clip);
+    }
+    for (ButtonElt::iterator it = buttons.begin(); it != buttons.end(); ++it)
+        if (it->second.show_flag > 0)
+            drawTaggedSurface(surface, it->second.anim[it->second.show_flag - 1], clip);
+}
 
 void PonscripterLabel::refreshSprite(int sprite_no, bool active_flag,
                                      int cell_no, SDL_Rect* check_src_rect,
@@ -941,6 +1233,7 @@ void PonscripterLabel::refreshSprite(int sprite_no, bool active_flag,
         sprite_info[sprite_no].visible(active_flag);
         dirty_rect.add(sprite_info[sprite_no].pos);
     }
+    
 }
 
 

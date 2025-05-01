@@ -43,7 +43,7 @@
 
 #define DEFAULT_BLIT_FLAG (0)
 
-#define MAX_SPRITE_NUM 1000
+#define MAX_SPRITE_NUM 1001
 #define MAX_SPRITE2_NUM 256
 #define MAX_PARAM_NUM 100
 #define CUSTOM_EFFECT_NO 100
@@ -64,13 +64,18 @@
 
 #define NUM_GLYPH_CACHE 30
 
-#define MAX_CHANNEL_NUM 10
-#define MAX_LIP_NUM 15
+#define MAX_CHANNEL_NUM 30
+#define MAX_LIP_NUM 50
 #define MAX_STAMP_NUM 1000
 #define MAX_SIMUL_NUM 1000
 #define CHUNK_DURATION_MS 50
 #define EXPRESSION2THRESHOLD 0.7f
 #define EXPRESSION1THRESHOLD 0.3f
+
+#define MAX_SNOW_NUM 100
+
+#define DWAVE_LOG_NUM 50
+#define DWAVE_LOG_LEN 30
 
 struct Subtitle {
     int number;
@@ -356,18 +361,33 @@ public:
     int simul_autobg2Command(const pstring& cmd);
     int simul_bg2Command(const pstring& cmd);
     int simul_ch_witheffCommand(const pstring& cmd);
+    int simul_dlog_movCommand(const pstring& cmd);
+    //int simul_dlog_nextCommand(const pstring& cmd);
+    int simul_dlog_playCommand(const pstring& cmd);
+    int simul_dlog_saveCommand(const pstring& cmd);
+    int simul_dlog_stopCommand(const pstring& cmd);
     int simul_lipCommand(const pstring& cmd);
     int simul_lipallCommand(const pstring& cmd);
+    int simul_lipall_idCommand(const pstring& cmd);
     int simul_makerainCommand(const pstring& cmd);
+    int simul_makerain2Command(const pstring& cmd);
+    int simul_makesnow1Command(const pstring& cmd);
+    int simul_makesnow2Command(const pstring& cmd);
+    int simul_multfontCommand(const pstring& cmd);
     int simul_nextldCommand(const pstring& cmd);
     int simul_nextvoiceCommand(const pstring& cmd);
     int simul_offCommand(const pstring& cmd);
     int simul_offallCommand(const pstring& cmd);
     int simul_playCommand(const pstring& cmd);
+    int simul_play_nowCommand(const pstring& cmd);
+    int simul_rain_nowCommand(const pstring& cmd);
     int simul_setCommand(const pstring& cmd);
     int simul_set_manualCommand(const pstring& cmd);
     int simul_set_oneCommand(const pstring& cmd);
     int simul_shakeCommand(const pstring& cmd);
+    int simul_shake_nowCommand(const pstring& cmd);
+    int simul_snow1_nowCommand(const pstring& cmd);
+    int simul_snow2_nowCommand(const pstring& cmd);
     int simul_sysoffCommand(const pstring& cmd);
 
 protected:
@@ -781,6 +801,8 @@ private:
     void effectTrvswave( char *params, int duration );
     void effectLngtwave( char *params, int duration );
     void effectWhirl( char *params, int duration );
+    void initGlass();
+    void effectGlass( char *params, int duration );
 
     struct BreakupCell {
         int cell_x, cell_y;
@@ -967,11 +989,14 @@ private:
     bool from_simul;
     bool pause_flag;
     bool autobg2_flag;
-    bool lipall_flag;
+    int lipall_flag;
     int rainpause_flag;
+    bool lip_effpause_flag;
     
     int pause_sound_stack;
     int rain_now;
+    int snow1_now;
+    int snow2_now;
     int shake_now;
     int bg2_now;
     int autobg2_ch;
@@ -999,22 +1024,50 @@ private:
     AnimationInfo* simul_info;
     //AnimationInfo simul_info[MAX_SIMUL_NUM];
     int simul_info_p;
+    AnimationInfo* simul_hole_info;
     AnimationInfo** simul_lip_info;
+    //AnimationInfo** simul_lip_info2;
     //AnimationInfo simul_lip_info[MAX_LIP_NUM][3];
     int simul_lip_info_p;
     int simul_lip_id[MAX_LIP_NUM];
     int simul_lip_sno[MAX_LIP_NUM];
     int simul_lip_x[MAX_LIP_NUM];
     int simul_lip_y[MAX_LIP_NUM];
-    int simul_voice_id;
+    int simul_voice_id, simul_voice_id_temp;
+    //int simul_lip_hole[MAX_SPRITE_NUM];
+    int simul_lip_lii[MAX_SPRITE_NUM];
+    //int simul_lip_hole2[MAX_SPRITE2_NUM];
+    int simul_lip_lii2[MAX_SPRITE2_NUM];
 
+    pstring temp_dwave_log[DWAVE_LOG_LEN];
+    int temp_dwave_log_n;
+    pstring dwave_log[DWAVE_LOG_NUM][DWAVE_LOG_LEN];
+    int dwave_log_n[DWAVE_LOG_NUM];
+    int dwave_log_ch, dwave_log_p;
+    int dwave_log_on, dwave_log_play;
+
+    pstring dwave_test_log;
+    int dwave_test_flag;
+    int dwave_test_play;
+    Uint32 dwave_test_st, dwave_test_ed;
+
+    int simul_font_size;
+    int simul_font_mult;
 
     AnimationInfo drop_info;
+    AnimationInfo** drop_info2;
     SDL_Surface* simul_rain_surface;
     //SDL_Surface* simul_drop_surface;
     SDL_Surface* simul_src_surface;
-    int simul_rainNum, simul_rainMaxLength, simul_rainMinLength;
+    int simul_rainNum, simul_rainMaxLength, simul_rainMinLength, simul_rainWidth, simul_rainRot;
     Uint32 simul_rainstartTick, simul_rainPeriod;
+
+    AnimationInfo* snow_info;
+    //SDL_Surface* simul_snow_surface1; SDL_Surface* simul_snow_surface2;
+    Uint32 simul_snowstartTick, simul_snowPeriod;
+    int simul_snow_state[2][MAX_SNOW_NUM][4];
+    int simul_snowNum[2];
+
 
     bool simul_shakemode, simul_shakeflag;
     Uint32 simul_shakestartTick, simul_shakePeriod;
@@ -1026,8 +1079,12 @@ private:
     bool simul_checkFlushSub();
     void simul_checkFlush();
     void simul_drawRain();
-    void simul_refreshSub(SDL_Surface* surface, SDL_Rect &clip, int priority);
+    void simul_progSnow();
+    //void simul_drawSnow(int funcid);
+    void simul_refreshSub(SDL_Surface* surface, SDL_Rect &clip, int priority, int refresh_mode = REFRESH_NORMAL_MODE);
     void drawTaggedSurface2(SDL_Surface* dst_surface, AnimationInfo* anim, SDL_Rect &clip);
+    void refreshSurface2eff(SDL_Surface* surface, SDL_Rect* clip_src,
+        int refresh_mode = REFRESH_NORMAL_MODE);
     
     void simul_play(int no);
     int set_id(pstring& filename);

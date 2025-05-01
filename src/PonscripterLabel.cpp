@@ -319,18 +319,33 @@ sfunc_lut_t::sfunc_lut_t() {
     dict["simul_autobg2"]    = &PonscripterLabel::simul_autobg2Command;
     dict["simul_bg2"]        = &PonscripterLabel::simul_bg2Command;
     dict["simul_ch_witheff"] = &PonscripterLabel::simul_ch_witheffCommand;
+    dict["simul_dlog_mov"]   = &PonscripterLabel::simul_dlog_movCommand;
+    //dict["simul_dlog_next"]  = &PonscripterLabel::simul_dlog_nextCommand;
+    dict["simul_dlog_play"]  = &PonscripterLabel::simul_dlog_playCommand;
+    dict["simul_dlog_save"]  = &PonscripterLabel::simul_dlog_saveCommand;
+    dict["simul_dlog_stop"]  = &PonscripterLabel::simul_dlog_stopCommand;
     dict["simul_lip"]        = &PonscripterLabel::simul_lipCommand;
     dict["simul_lipall"]     = &PonscripterLabel::simul_lipallCommand;
+    dict["simul_lipall_id"]  = &PonscripterLabel::simul_lipall_idCommand;
     dict["simul_makerain"]   = &PonscripterLabel::simul_makerainCommand;
+    dict["simul_makerain2"]   = &PonscripterLabel::simul_makerain2Command;
+    dict["simul_makesnow1"]   = &PonscripterLabel::simul_makesnow1Command;
+    dict["simul_makesnow2"]   = &PonscripterLabel::simul_makesnow2Command;
+    dict["simul_multfont"]   = &PonscripterLabel::simul_multfontCommand;
     dict["simul_nextld"]     = &PonscripterLabel::simul_nextldCommand;
     dict["simul_nextvoice"]  = &PonscripterLabel::simul_nextvoiceCommand;
     dict["simul_off"]        = &PonscripterLabel::simul_offCommand;
     dict["simul_offall"]     = &PonscripterLabel::simul_offallCommand;
     dict["simul_play"]       = &PonscripterLabel::simul_playCommand;
+    dict["simul_play_now"]   = &PonscripterLabel::simul_play_nowCommand;
+    dict["simul_rain_now"]   = &PonscripterLabel::simul_rain_nowCommand;
     dict["simul_set"]        = &PonscripterLabel::simul_setCommand;
     dict["simul_set_manual"] = &PonscripterLabel::simul_set_manualCommand;
     dict["simul_set_one"]    = &PonscripterLabel::simul_set_oneCommand;
     dict["simul_shake"]      = &PonscripterLabel::simul_shakeCommand;
+    dict["simul_shake_now"]  = &PonscripterLabel::simul_shake_nowCommand;
+    dict["simul_snow1_now"]   = &PonscripterLabel::simul_snow1_nowCommand;
+    dict["simul_snow2_now"]   = &PonscripterLabel::simul_snow2_nowCommand;
     dict["simul_sysoff"]     = &PonscripterLabel::simul_sysoffCommand;
     dict["sp_rgb_gradation"] = &PonscripterLabel::sp_rgb_gradationCommand;
     dict["spbtn"]            = &PonscripterLabel::spbtnCommand;
@@ -637,9 +652,12 @@ PonscripterLabel::PonscripterLabel()
     skip_to_wait         = 0;
     sprite_info          = new AnimationInfo[MAX_SPRITE_NUM];
     sprite2_info         = new AnimationInfo[MAX_SPRITE2_NUM];
+    simul_hole_info = new AnimationInfo[MAX_LIP_NUM];
     simul_lip_info = new AnimationInfo*[MAX_LIP_NUM];
+    //simul_lip_info2 = new AnimationInfo*[MAX_LIP_NUM];
     for(int ii=0; ii<MAX_LIP_NUM; ii++){
         simul_lip_info[ii] = new AnimationInfo[3];
+        //simul_lip_info2[ii] = new AnimationInfo[3];
     }
     simul_info = new AnimationInfo[MAX_SIMUL_NUM];
     enable_wheeldown_advance_flag = false;
@@ -1287,8 +1305,11 @@ int PonscripterLabel::init(const char* preferred_script)
     autobg2_flag = false;
     lipall_flag = false;
     rainpause_flag = 0;
+    lip_effpause_flag = 0;
     pause_sound_stack = 0;
     rain_now = -1;
+    snow1_now = -1;
+    snow2_now = -1;
     shake_now = -1;
     bg2_now = -1;
     autobg2_ch = -1;
@@ -1305,6 +1326,20 @@ int PonscripterLabel::init(const char* preferred_script)
     }
     simul_Channel[0].pre_mode = 1;
 
+    for(i=0; i<DWAVE_LOG_NUM; i++){
+        dwave_log_n[i]=0;
+    }
+    temp_dwave_log_n=0;
+    dwave_log_ch=0;
+    dwave_log_p=0;
+    dwave_log_on=0;
+    dwave_log_play=0;
+
+    dwave_test_flag=0;
+
+    simul_font_size=24;
+    simul_font_mult=100;
+
     //simul_info = new AnimationInfo[MAX_SIMUL_NUM];
     //for (i = 0; i < MAX_SIMUL_NUM; i++) simul_info[i].reset();
     simul_info_p = 0;
@@ -1318,6 +1353,7 @@ int PonscripterLabel::init(const char* preferred_script)
         }
     }*/
     simul_voice_id = 0;
+    simul_voice_id_temp = 0;
 
     simul_rain_surface =
         AnimationInfo::allocSurface(screen_width, screen_height);
@@ -1329,6 +1365,15 @@ int PonscripterLabel::init(const char* preferred_script)
     SDL_SetSurfaceAlphaMod(simul_src_surface, SDL_ALPHA_OPAQUE);
     SDL_SetSurfaceBlendMode(simul_src_surface, SDL_BLENDMODE_NONE);
     simul_rainstartTick = 0;
+
+    /*simul_snow_surface1 =
+        AnimationInfo::allocSurface(screen_width, screen_height);
+    SDL_SetSurfaceAlphaMod(simul_snow_surface1, SDL_ALPHA_OPAQUE);
+    SDL_SetSurfaceBlendMode(simul_snow_surface1, SDL_BLENDMODE_ADD);
+    simul_snow_surface2 =
+        AnimationInfo::allocSurface(screen_width, screen_height);
+    SDL_SetSurfaceAlphaMod(simul_snow_surface2, SDL_ALPHA_OPAQUE);
+    SDL_SetSurfaceBlendMode(simul_snow_surface2, SDL_BLENDMODE_ADD);*/
 
     simul_shakemode = false;
     simul_shakestartTick = 0;
@@ -1342,6 +1387,74 @@ int PonscripterLabel::init(const char* preferred_script)
     drop_info.affine_flag = true;
     parseTaggedString(&drop_info);
     setupAnimationInfo(&drop_info);
+
+    drop_info2 = new AnimationInfo*[4];
+
+    for(i=0; i<4; i++){
+        drop_info2[i] = new AnimationInfo[7];
+        for(j=0; j<7; j++){
+            drop_info2[i][j].reset();
+            drop_info2[i][j].visible(true);
+            drop_info2[i][j].trans = 256;
+        }
+    }
+    
+    drop_info2[0][0].setImageName(":ba;bmp\\rain\\drop_05x70.png");
+    drop_info2[0][1].setImageName(":ba;bmp\\rain\\drop_07x70.png");
+    drop_info2[0][2].setImageName(":ba;bmp\\rain\\drop_10x70.png");
+    drop_info2[0][3].setImageName(":ba;bmp\\rain\\drop_15x70.png");
+    drop_info2[0][4].setImageName(":ba;bmp\\rain\\drop_20x70.png");
+    drop_info2[0][5].setImageName(":ba;bmp\\rain\\drop_25x70.png");
+    drop_info2[0][6].setImageName(":ba;bmp\\rain\\drop_30x70.png");
+
+    drop_info2[1][0].setImageName(":ba;bmp\\rain\\drop_05.png");
+    drop_info2[1][1].setImageName(":ba;bmp\\rain\\drop_07.png");
+    drop_info2[1][2].setImageName(":ba;bmp\\rain\\drop_10.png");
+    drop_info2[1][3].setImageName(":ba;bmp\\rain\\drop_15.png");
+    drop_info2[1][4].setImageName(":ba;bmp\\rain\\drop_20.png");
+    drop_info2[1][5].setImageName(":ba;bmp\\rain\\drop_25.png");
+    drop_info2[1][6].setImageName(":ba;bmp\\rain\\drop_30.png");
+    
+    drop_info2[2][0].setImageName(":ba;bmp\\rain\\drop_05x200.png");
+    drop_info2[2][1].setImageName(":ba;bmp\\rain\\drop_07x200.png");
+    drop_info2[2][2].setImageName(":ba;bmp\\rain\\drop_10x200.png");
+    drop_info2[2][3].setImageName(":ba;bmp\\rain\\drop_15x200.png");
+    drop_info2[2][4].setImageName(":ba;bmp\\rain\\drop_20x200.png");
+    drop_info2[2][5].setImageName(":ba;bmp\\rain\\drop_25x200.png");
+    drop_info2[2][6].setImageName(":ba;bmp\\rain\\drop_30x200.png");
+    
+    drop_info2[3][0].setImageName(":ba;bmp\\rain\\drop_05rot.png");
+    drop_info2[3][1].setImageName(":ba;bmp\\rain\\drop_07rot.png");
+    drop_info2[3][2].setImageName(":ba;bmp\\rain\\drop_10rot.png");
+    drop_info2[3][3].setImageName(":ba;bmp\\rain\\drop_15rot.png");
+    drop_info2[3][4].setImageName(":ba;bmp\\rain\\drop_20rot.png");
+    drop_info2[3][5].setImageName(":ba;bmp\\rain\\drop_25rot.png");
+    drop_info2[3][6].setImageName(":ba;bmp\\rain\\drop_30rot.png");
+
+    for(i=0; i<4; i++){
+        for(j=0; j<7; j++){
+            parseTaggedString(&drop_info2[i][j]);
+            setupAnimationInfo(&drop_info2[i][j]);
+        }
+    }
+
+    snow_info = new AnimationInfo[2];
+
+    snow_info[0].reset();
+    snow_info[0].visible(true);
+    snow_info[0].setImageName(":ba;bmp\\background\\efe\\orb.png");
+    snow_info[0].trans = 256;
+    parseTaggedString(&snow_info[0]);
+    setupAnimationInfo(&snow_info[0]);
+
+    snow_info[1].reset();
+    snow_info[1].visible(true);
+    snow_info[1].setImageName(":ba;bmp\\background\\efe\\orb_small.png");
+    snow_info[1].trans = 256;
+    parseTaggedString(&snow_info[1]);
+    setupAnimationInfo(&snow_info[1]);
+    simul_snowstartTick = 0;
+    simul_snowNum[0] = 0; simul_snowNum[1] = 0; 
 
     auto_info.reset();
     auto_info.visible(true);
@@ -1515,16 +1628,22 @@ void PonscripterLabel::resetSub()
     createBackground();
     for (i = 0; i < 3; i++) tachi_info[i].reset();
     for (i = 0; i < MAX_LIP_NUM; i++){
+        simul_hole_info[i].reset();
         simul_lip_id[i] = 0;
         simul_lip_sno[i] = -1;
         for(int j = 0; j < 3; j++){
             simul_lip_info[i][j].reset();
+            //simul_lip_info2[i][j].reset();
         }
     }
     simul_Channel[0].mode = 0;
     for (i = 0; i < MAX_SPRITE_NUM; i++) sprite_info[i].reset();
     for (i = 0; i < MAX_SPRITE2_NUM; i++) sprite2_info[i].reset();
     for (i = 0; i < MAX_SIMUL_NUM; i++) simul_info[i].reset();
+    //for (i = 0; i < MAX_SPRITE_NUM; i++) simul_lip_hole[i] = 0;
+    for (i = 0; i < MAX_SPRITE_NUM; i++) simul_lip_lii[i] = -1;
+    //for (i = 0; i < MAX_SPRITE2_NUM; i++) simul_lip_hole2[i] = 0;
+    for (i = 0; i < MAX_SPRITE2_NUM; i++) simul_lip_lii2[i] = -1;
     barclearCommand("barclear");
     prnumclearCommand("prnumclear");
     for (i = 0; i < 2; i++) cursor_info[i].reset();
@@ -2180,6 +2299,7 @@ void PonscripterLabel::newPage(bool next_flag)
     for (j = 0; j < 2; j++) {
         if (current_read_language == j || current_read_language == -1) {
             if (!current_text_buffer[j]->empty()) {
+                if(!current_read_language) temp_dwave_log_n = 0;
                 current_text_buffer[j] = current_text_buffer[j]->next;
                 if (start_text_buffer[j] == current_text_buffer[j])
                     start_text_buffer[j] = start_text_buffer[j]->next;

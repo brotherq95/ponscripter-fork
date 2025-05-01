@@ -207,14 +207,14 @@ int PonscripterLabel::playSound(const pstring& filename, int format,
     if (format & (SOUND_OGG | SOUND_OGG_STREAMING)) {
         CBStringList fileparts;
         fileparts = filename.split("\\", 3);
-        if(fileparts[0] != "voice") simul_voice_id = 0;
-        else simul_voice_id = (fileparts[1].character(0)-'0')*10 + fileparts[1].character(1)-'0';
-        if(simul_voice_id==5){
-            if(fileparts[2].find("3300")>=0)
-                simul_voice_id = 34;
+        if(fileparts[0] != "voice") simul_voice_id_temp = 0;
+        else simul_voice_id_temp = (fileparts[1].character(0)-'0')*10 + fileparts[1].character(1)-'0';
+        if(simul_voice_id_temp==5){
+            if(fileparts[2].find("3330")>=0 || fileparts[2].find("4330")>=0)
+                simul_voice_id_temp = 34;
         }
         if(next_voice){
-            simul_voice_id = next_voice;
+            simul_voice_id_temp = next_voice;
         }
         int ret = playOGG(format, buffer, length, loop_flag, channel);
         if (ret & (SOUND_OGG | SOUND_OGG_STREAMING)) return ret;
@@ -353,67 +353,72 @@ int PonscripterLabel::playOGG(int format, unsigned char* buffer, long length, bo
 
     int index_offset = 0;
     int i, j, chunkn;
-    //if(simul_voice_id)
-    simul_Channel[0].mode = 0;
-    if(simul_voice_id == 50){
-        for(i = MAX_LIP_NUM-1; i>=0; i--){
-            if(simul_lip_id[i] == 50){
-                index_offset = MAX_SIMUL_NUM + i*3;
-                break;
-            }
-        }
-        if(!index_offset){
-            for(i = MAX_LIP_NUM-1; i>=0; i--){
-                if(simul_lip_id[i] == 56){
-                    index_offset = MAX_SIMUL_NUM + i*3;
-                    break;
-                }
-            }
-        }
-    }
-    else if(simul_voice_id == 56){
-        for(i = MAX_LIP_NUM-1; i>=0; i--){
-            if(simul_lip_id[i] == 56){
-                index_offset = MAX_SIMUL_NUM + i*3;
-                break;
-            }
-        }
-        if(!index_offset){
+    //if(simul_voice_id_temp)
+    if(channel == 0){
+        simul_Channel[0].mode = 0;
+        if(simul_voice_id_temp == 50){
             for(i = MAX_LIP_NUM-1; i>=0; i--){
                 if(simul_lip_id[i] == 50){
                     index_offset = MAX_SIMUL_NUM + i*3;
                     break;
                 }
             }
-        }
-    }
-    else if(simul_voice_id == 59){
-        for(i = MAX_LIP_NUM-1; i>=0; i--){
-            if(simul_lip_id[i] == 27){
-                index_offset = MAX_SIMUL_NUM + i*3;
-                break;
+            if(!index_offset){
+                for(i = MAX_LIP_NUM-1; i>=0; i--){
+                    if(simul_lip_id[i] == 56){
+                        index_offset = MAX_SIMUL_NUM + i*3;
+                        break;
+                    }
+                }
             }
         }
-    }
-    else{
-        for(i = MAX_LIP_NUM-1; i>=0; i--){
-            if(simul_lip_id[i] == simul_voice_id){
-                index_offset = MAX_SIMUL_NUM + i*3;
-                break;
+        else if(simul_voice_id_temp == 56){
+            for(i = MAX_LIP_NUM-1; i>=0; i--){
+                if(simul_lip_id[i] == 56){
+                    index_offset = MAX_SIMUL_NUM + i*3;
+                    break;
+                }
+            }
+            if(!index_offset){
+                for(i = MAX_LIP_NUM-1; i>=0; i--){
+                    if(simul_lip_id[i] == 50){
+                        index_offset = MAX_SIMUL_NUM + i*3;
+                        break;
+                    }
+                }
             }
         }
-    }
-    /*if(pause_flag || skip_flag || ctrl_pressed_status || skip_to_wait){
-        index_offset = 0;
-        pause_sound_stack = 1;
-    }
-    else if(pause_sound_stack>=0){
-        index_offset = 0;
-        pause_sound_stack--;
-    }
-    else*/
-    if(simul_Channel[0].pre_mode==0){
-        index_offset = 0;
+        else if(simul_voice_id_temp == 59){
+            for(i = MAX_LIP_NUM-1; i>=0; i--){
+                if(simul_lip_id[i] == 27){
+                    index_offset = MAX_SIMUL_NUM + i*3;
+                    break;
+                }
+            }
+        }
+        else{
+            for(i = MAX_LIP_NUM-1; i>=0; i--){
+                if(simul_lip_id[i] == simul_voice_id_temp){
+                    index_offset = MAX_SIMUL_NUM + i*3;
+                    break;
+                }
+            }
+        }
+        if(lipall_flag==2 && !index_offset){
+            index_offset = MAX_SIMUL_NUM;
+        }
+        /*if(pause_flag || skip_flag || ctrl_pressed_status || skip_to_wait){
+            index_offset = 0;
+            pause_sound_stack = 1;
+        }
+        else if(pause_sound_stack>=0){
+            index_offset = 0;
+            pause_sound_stack--;
+        }
+        else*/
+        if(simul_Channel[0].pre_mode==0){
+            index_offset = 0;
+        }
     }
 
     if (format & SOUND_OGG) {
@@ -426,7 +431,13 @@ int PonscripterLabel::playOGG(int format, unsigned char* buffer, long length, bo
         decodeOggVorbis(&ms, buffer2 + sizeof(WAVE_HEADER), ovi->decoded_length, false);
         setupWaveHeader(buffer2, channels, rate, 16, ovi->decoded_length);
 
-        if(index_offset){
+        if(dwave_test_flag==1 && channel == 0){
+            if(ovi->decoded_length > ((rate * CHUNK_DURATION_MS) / 1000) * channels * sizeof(short) * 6){
+                dwave_test_flag=2;
+            }
+        }
+        
+        if(channel == 0 && index_offset){
             const short* buffer3 = (const short*)buffer2 + sizeof(WAVE_HEADER);
             long loop_length = ovi->decoded_length/2;
             long chunk_samples = (rate * CHUNK_DURATION_MS) / 1000;
@@ -462,8 +473,9 @@ int PonscripterLabel::playOGG(int format, unsigned char* buffer, long length, bo
             simul_Channel[0].mode = 0;
             simul_Channel[0].pre_mode = 1;
             simul_voice_sno = -1;
+            simul_voice_id = simul_voice_id_temp;
             if(index_offset < MAX_SIMUL_NUM + 3*3)
-                simul_Channel[0].priority = 6;
+                simul_Channel[0].priority = 12;
             else{
                 simul_Channel[0].priority = 11;
                 simul_voice_sno = simul_lip_sno[(index_offset - MAX_SIMUL_NUM)/3];
@@ -483,7 +495,7 @@ int PonscripterLabel::playOGG(int format, unsigned char* buffer, long length, bo
 
         playWave(chunk, format, loop_flag, channel);
 
-        if(index_offset){
+        if(channel == 0 && index_offset){
             /*Uint32 now = SDL_GetTicks();
             simul_Channel[0].startTick = now;
             simul_Channel[0].mode = simul_Channel[0].pre_mode;
