@@ -8,7 +8,7 @@ draw images with timestamp (or interval)
 
 
 
-channel : provide 10 channels, channel number : 0~9 (MAX_CHANNEL_NUM = 10)
+channel : provide 30 channels, channel number : 0~29 (MAX_CHANNEL_NUM = 30)
 !! channel 0 is used for voice !!
 override when channel number is same
 
@@ -83,9 +83,10 @@ force id of next voice (until 'simul_nextvoice 0' called)
 
 
 ■ simul_lipall NUM
-on(1)/off(0)
+mode(1, 2)/off(0)
 
 on(1) to enable all lips of standing images with same id (ex. lots of beatrice)
+on(2) to enable all lips of standing images (ex. 7sisters)
 
 
 ■ simul_ch_witheff NUM NUM
@@ -107,8 +108,8 @@ on(1) to load all images immediately
 (ex. set between text and @, pre_load while user reads text, so prevent feeling the load)
 
 
-■ simul_set_manual NUM NUM NUM NUM STR NUM
-channel, mode, priority, pre_load, first image filename, number of images
+■ simul_set_manual NUM NUM NUM NUM STR NUM [, NUM] [, NUM]
+channel, mode, priority, pre_load, first image filename, number of images, Top-left X-coordinate, Y
 Example)
 simul_set_manual 2, 1, 1, 1, ":b;movie\ep8_wd_subtitles\01.png", 19
 simul_ch_witheff 2, 1
@@ -137,8 +138,8 @@ simul_play 2
 like simul_set, but more lsp-like
 
 
-■ simul_makerain NUM NUM NUM NUM NUM NUM NUM
-channel, priority, interval(ms), num of rain, width scale of rain(% of origin), min length of rain(% of screen_height), max length
+■ simul_makerain NUM NUM NUM NUM NUM NUM NUM [, NUM]
+channel, priority, interval(ms), num of rain, width scale of rain(% of origin), min length of rain(% of screen_height), max length, rotation angle (degrees, counterclockwise)
 Example)
 simul_makerain 7, 9, 15, 300, 200, 20, 30
 simul_ch_witheff 7, 1
@@ -146,6 +147,31 @@ simul_ch_witheff 7, 1
 raindrop with random length generated
 off when next 'bg' called && 'simul_ch_witheff' was (0)
 set interval 100000000(Exception) to pause rain better (in this case, doesn't off when next 'bg' called)
+(no need 'simul_play')
+
+
+■ simul_makerain2 NUM NUM NUM NUM NUM NUM NUM [, NUM]
+channel, priority, interval(ms), num of rain, width scale of rain(% of origin, only use 70, 100, 200), min length of rain(% of screen_height, range of [5, 30]), max length, rotation angle (only 7angle with 200width is supported)
+Example)
+simul_makerain2 7, 9, 15, 300, 200, 20, 30
+simul_ch_witheff 7, 1
+
+faster with lsp-like method (instead of lsp2-like)
+interval 100000000 is not supported
+
+
+■ simul_makesnow1 NUM NUM NUM NUM NUM NUM NUM NUM
+■ simul_makesnow2 NUM NUM NUM NUM NUM NUM NUM NUM
+channel, priority, interval(ms), num of snow(max 100), min xspeed(px per interval), max xspeed, min yspeed, max yspeed
+Example)
+simul_makesnow1 11, 3, 15, 50, 5, 6, 2, 3
+simul_makesnow2 12, 9, 15, 50, 4, 5, 1, 2
+simul_ch_witheff 11, 1
+simul_ch_witheff 12, 1
+
+snow with random scale generated
+snow1 : big
+snow2 : small
 (no need 'simul_play')
 
 
@@ -167,7 +193,84 @@ Example)
 simul_shake 8, 15, 2500, 2000
 
 at boat scene, shake screen (before text window, priority 3~9)
-shake x 20, y 80 at 1920x1080
+shake x 10, y 20 at 1920x1080
 (recommended to use with simul_bg2)
 (recommended to keep useing the same channel)
 (no need 'simul_play')
+
+
+■ simul_rain_now %VAR
+Result numeric variable
+Example)
+simul_rain_now %2
+
+return the channel number which makes rain now
+if there's no channel, return -1
+
+
+■ simul_shake_now %VAR
+Result numeric variable
+Example)
+simul_shake_now %2
+
+return the channel number which makes shake now
+if there's no channel, return -1
+
+
+■ simul_snow1_now %VAR
+■ simul_snow2_now %VAR
+Result numeric variable
+Example)
+simul_snow1_now %2
+
+return the channel number which makes snow now
+if there's no channel, return -1
+
+
+■ simul_play_now NUM %VAR
+channel, Result numeric variable
+Example)
+simul_play_now 9, %2
+
+return whether the given channel is in use (result is same with mode number)
+( mode :  0 - off, 1 - once, 2 - loop )
+( 10 - rain, 11 - shake )
+
+
+■ simul_dlog_save NUM
+index
+Example)
+simul_dlog_save 48
+
+save the list of dwave with backlog to given index
+( index : 0~49 )
+( max num of list : 30 )
+
+
+■ simul_dlog_mov NUM NUM
+dst index, src index
+Example)
+simul_dlog_mov 1+ %BacklogNum - Backlogpage0, 48
+
+mov the list of dwave
+
+
+■ simul_dlog_play NUM
+index
+Example)
+simul_dlog_play 1+ %backloglook - Backlogpage0
+
+play the list of dwave
+
+
+■ simul_dlog_stop
+
+stop dwave list play
+
+
+■ simul_multfont NUM
+font size(%)
+Example)
+simul_multfont 150
+
+multiply font with given % until next clickwait
